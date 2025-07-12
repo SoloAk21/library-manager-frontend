@@ -4,9 +4,10 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import PrivateRoute from "./components/PrivateRoute";
-import BorrowReturnPage from "./pages/BorrowReturnPage";
 import ProfilePage from "./pages/ProfilePage";
 import MainContent from "./pages/MainContent";
+import BooksPage from "./pages/BooksPage";
+import BorrowRecordsPage from "./pages/BorrowRecordsPage";
 
 function App() {
   return (
@@ -23,9 +24,9 @@ function App() {
           }
         >
           <Route index element={<MainContent />} />
-          <Route path="borrow-return" element={<BorrowReturnPage />} />
+          <Route path="borrow-return" element={<BorrowRecordsPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="books" element={<div>Books Page</div>} />
+          <Route path="books" element={<BooksPage />} />
           <Route path="members" element={<div>Members Page</div>} />
         </Route>
         <Route

@@ -1,16 +1,45 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchDashboardData,
+  clearError,
+} from "../redux/dashboard/dashboardSlice";
+import toast from "react-hot-toast";
 
 export default function MainContent() {
+  const dispatch = useDispatch();
+  const {
+    totalBooks,
+    totalMembers,
+    activeBorrows,
+    overdueBooks,
+    recentActivity,
+    loading,
+    error,
+  } = useSelector((state) => state.dashboard);
+
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
   return (
     <main className="flex-1 overflow-auto p-6">
+      {loading && <p className="text-center">Loading dashboard data...</p>}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-bold text-gray-900">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-3xl font-bold text-gray-900">
               Librarian Dashboard
             </h1>
-            <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
+            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 text-xs">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -18,10 +47,10 @@ export default function MainContent() {
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-user w-3 h-3 mr-1"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-user w-3 h-3 mr-1"
               >
                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -29,6 +58,9 @@ export default function MainContent() {
               LIBRARIAN
             </div>
           </div>
+          <p class="text-gray-600">
+            Standard library operations - Books, members, and borrowing
+          </p>
         </div>
         <div className="rounded-lg border text-card-foreground shadow-sm border-green-200 bg-green-50">
           <div className="p-6 pt-6">
@@ -70,7 +102,7 @@ export default function MainContent() {
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
                 height="24"
-                viewBox="0 0 24 22"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -83,7 +115,7 @@ export default function MainContent() {
               </svg>
             </div>
             <div className="p-6 pt-0">
-              <div className="text-2xl font-bold">1180</div>
+              <div className="text-2xl font-bold">{totalBooks}</div>
             </div>
           </div>
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -110,7 +142,7 @@ export default function MainContent() {
               </svg>
             </div>
             <div className="p-6 pt-0">
-              <div className="text-2xl font-bold">340</div>
+              <div className="text-2xl font-bold">{totalMembers}</div>
             </div>
           </div>
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -137,7 +169,7 @@ export default function MainContent() {
               </svg>
             </div>
             <div className="p-6 pt-0">
-              <div className="text-2xl font-bold">89</div>
+              <div className="text-2xl font-bold">{activeBorrows}</div>
             </div>
           </div>
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -163,7 +195,9 @@ export default function MainContent() {
               </svg>
             </div>
             <div className="p-6 pt-0">
-              <div className="text-2xl font-bold text-red-600">8</div>
+              <div className="text-2xl font-bold text-red-600">
+                {overdueBooks}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Your assigned books
               </p>
@@ -283,149 +317,47 @@ export default function MainContent() {
           </div>
           <div className="p-6 pt-0">
             <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-left-right h-4 w-4"
+              {recentActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
+                >
+                  <div
+                    className={`p-2 rounded-full ${
+                      activity.action === "Borrowed"
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-green-100 text-green-600"
+                    }`}
                   >
-                    <path d="M8 3 4 7l4 4"></path>
-                    <path d="M4 7h16"></path>
-                    <path d="m16 21 4-4-4-4"></path>
-                    <path d="M20 17H4"></path>
-                  </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-arrow-left-right h-4 w-4"
+                    >
+                      <path d="M8 3 4 7l4 4"></path>
+                      <path d="M4 7h16"></path>
+                      <path d="m16 21 4-4-4-4"></path>
+                      <path d="M20 17H4"></path>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {activity.action}: {activity.bookTitle}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Member: {activity.memberName} •{" "}
+                      {new Date(activity.date).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">
-                    Borrowed: The Great Gatsby
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Member: John Smith • 1/6/2024
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 rounded-full bg-green-100 text-green-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-left-right h-4 w-4"
-                  >
-                    <path d="M8 3 4 7l4 4"></path>
-                    <path d="M4 7h16"></path>
-                    <path d="m16 21 4-4-4-4"></path>
-                    <path d="M20 17H4"></path>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">
-                    Returned: To Kill a Mockingbird
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Member: Jane Doe • 1/6/2024
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-left-right h-4 w-4"
-                  >
-                    <path d="M8 3 4 7l4 4"></path>
-                    <path d="M4 7h16"></path>
-                    <path d="m16 21 4-4-4-4"></path>
-                    <path d="M20 17H4"></path>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Borrowed: 1984</p>
-                  <p className="text-xs text-gray-500">
-                    Member: Bob Johnson • 1/5/2024
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 rounded-full bg-green-100 text-green-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-left-right h-4 w-4"
-                  >
-                    <path d="M8 3 4 7l4 4"></path>
-                    <path d="M4 7h16"></path>
-                    <path d="m16 21 4-4-4-4"></path>
-                    <path d="M20 17H4"></path>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">
-                    Returned: Pride and Prejudice
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Member: Alice Brown • 1/5/2024
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-left-right h-4 w-4"
-                  >
-                    <path d="M8 3 4 7l4 4"></path>
-                    <path d="M4 7h16"></path>
-                    <path d="m16 21 4-4-4-4"></path>
-                    <path d="M20 17H4"></path>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">
-                    Borrowed: The Catcher in the Rye
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Member: Charlie Wilson • 1/4/2024
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
