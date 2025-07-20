@@ -5,6 +5,7 @@ import borrowRecordsReducer from "./borrowRecords/borrowRecordsSlice";
 import booksReducer from "./books/booksSlice";
 import genresReducer from "./genres/genresSlice";
 import membersReducer from "./members/membersSlice";
+import staffReducer from "./staff/staffSlice";
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -13,6 +14,7 @@ const store = configureStore({
     books: booksReducer,
     genres: genresReducer,
     members: membersReducer,
+    staff: staffReducer,
   },
 });
 

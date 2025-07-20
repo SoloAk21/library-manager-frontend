@@ -137,12 +137,7 @@ const authSlice = createSlice({
       })
       .addCase(signup.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.access_token;
-        state.isAuthenticated = true;
         state.successMessage = "Account created successfully!";
-        localStorage.setItem("user", JSON.stringify(action.payload.user));
-        localStorage.setItem("token", action.payload.access_token);
       })
       .addCase(signup.rejected, (state, action) => {
         state.loading = false;
