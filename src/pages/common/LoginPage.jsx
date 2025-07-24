@@ -18,19 +18,7 @@ const LoginPage = () => {
   );
 
   const initialData = { email: "", password: "" };
-  const validate = (data) => {
-    const errors = {};
-    if (!data.email.trim()) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(data.email))
-      errors.email = "Invalid email format";
-    if (!data.password.trim()) errors.password = "Password is required";
-    return errors;
-  };
-
-  const { formData, errors, handleChange, validateForm } = useForm(
-    initialData,
-    validate
-  );
+  const { formData, handleChange } = useForm(initialData);
 
   useEffect(() => {
     if (token) navigate("/dashboard");
@@ -39,18 +27,17 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (error) {
-      showToast(error, "error", "Error");
+      showToast(error, "error", "Login Failed");
       dispatch(clearMessages());
     }
     if (successMessage) {
-      showToast(successMessage, "success", "Success");
+      showToast(successMessage, "success", "Login Success");
       dispatch(clearMessages());
     }
   }, [error, successMessage, dispatch, showToast]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
     dispatch(login(formData));
   };
 
@@ -76,9 +63,9 @@ const LoginPage = () => {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              error={errors.email}
               placeholder="Enter your email"
               disabled={loading}
+              required
             />
             <Input
               id="password"
@@ -86,9 +73,9 @@ const LoginPage = () => {
               type="password"
               value={formData.password}
               onChange={handleChange}
-              error={errors.password}
               placeholder="Enter your password"
               disabled={loading}
+              required
             />
             <Button type="submit" className="w-full" isLoading={loading}>
               Sign in
