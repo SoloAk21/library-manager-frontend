@@ -78,7 +78,7 @@ const AdminReportsPage = () => {
         {/* Top Section: Overdue + Genres */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Overdue Books */}
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+          <div className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-sm">
             <div className="flex flex-col space-y-1.5 p-6">
               <div className="text-2xl font-semibold tracking-tight flex items-center">
                 <TriangleAlertIcon className="h-5 w-5 text-red-500 mr-2" />
@@ -118,7 +118,7 @@ const AdminReportsPage = () => {
           </div>
 
           {/* Popular Genres */}
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+          <div className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-sm">
             <div className="flex flex-col space-y-1.5 p-6">
               <div className="text-2xl font-semibold tracking-tight flex items-center">
                 <TrendingUpIcon className="h-5 w-5 text-green-500 mr-2" />
@@ -177,7 +177,7 @@ const AdminReportsPage = () => {
           {stats.map((stat, idx) => (
             <div
               key={idx}
-              className="rounded-lg border bg-card text-card-foreground shadow-sm"
+              className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-sm"
             >
               <div className="p-6 flex justify-between items-center pb-2">
                 <div className="tracking-tight text-sm font-medium">

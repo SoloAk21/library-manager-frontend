@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "../../utils/cn";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import { EyeIcon, PencilIcon, TrashIcon } from "../ui/icons";
+import { EyeIcon, SquarePenIcon, TrashIcon } from "../ui/icons";
 
 const BookCard = React.memo(
   ({ book, onView, onEdit, onDelete, loading, isAdmin }) => {
@@ -15,8 +15,8 @@ const BookCard = React.memo(
     return (
       <div
         className={cn(
-          "rounded-lg border shadow-sm hover:shadow-md transition-shadow",
-          isAdmin && "border-primary bg-gray-50"
+          "rounded-lg border border-primary/10 bg-white text-card-foreground shadow-xs hover:shadow-md transition-shadow",
+          isAdmin && "border-primary bg-white"
         )}
       >
         <div className="flex flex-col space-y-1.5 p-6">
@@ -57,7 +57,7 @@ const BookCard = React.memo(
               onClick={() => onEdit(book)}
               disabled={loading}
             >
-              <PencilIcon className="h-4 w-4" />
+              <SquarePenIcon className="h-4 w-4" />
             </Button>
             {isAdmin && (
               <Button

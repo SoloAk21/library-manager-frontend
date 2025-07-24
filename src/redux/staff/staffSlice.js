@@ -2,7 +2,6 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -63,7 +62,7 @@ const staffSlice = createSlice({
     successMessage: null,
   },
   reducers: {
-    clearStaffMessages: (state) => {
+    clearMessages: (state) => {
       state.error = null;
       state.successMessage = null;
     },
@@ -82,12 +81,10 @@ const staffSlice = createSlice({
           staff.id === updatedStaff.id ? updatedStaff : staff
         );
         state.successMessage = "Staff updated successfully!";
-        toast.success("Staff updated successfully!");
       })
       .addCase(updateStaff.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Delete staff
@@ -101,16 +98,14 @@ const staffSlice = createSlice({
           (staff) => staff.id !== action.payload
         );
         state.successMessage = "Staff deleted successfully!";
-        toast.success("Staff deleted successfully!");
       })
       .addCase(deleteStaff.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       });
   },
 });
 
-export const { clearStaffMessages } = staffSlice.actions;
+export const { clearMessages } = staffSlice.actions;
 
 export default staffSlice.reducer;

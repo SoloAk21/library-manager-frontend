@@ -1,40 +1,37 @@
 import React from "react";
-import Dialog from "../../common/Dialog";
-import Button from "../../ui/Button";
+import Dialog from "../common/Dialog";
+import Button from "../ui/Button";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  deleteMember,
-  clearMessages,
-} from "../../../redux/members/membersSlice";
+import { deleteBook, clearMessages } from "../../redux/books/booksSlice";
 import toast from "react-hot-toast";
 
-const DeleteMemberDialog = ({ isOpen, onClose, member }) => {
+const DeleteBookDialog = ({ isOpen, onClose, book }) => {
   const dispatch = useDispatch();
   const { loading, error, successMessage } = useSelector(
-    (state) => state.members
+    (state) => state.books
   );
 
   const handleDelete = async () => {
-    if (!member) return;
+    if (!book) return;
     try {
-      await dispatch(deleteMember(member.id)).unwrap();
-      toast.success("Member deleted successfully");
+      await dispatch(deleteBook(book.id)).unwrap();
+      toast.success("Book deleted successfully");
       onClose();
     } catch (err) {
-      toast.error(err?.message || "Failed to delete member");
+      toast.error(err?.message || "Failed to delete book");
     } finally {
       dispatch(clearMessages());
     }
   };
 
-  if (!member) return null;
+  if (!book) return null;
 
   return (
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Delete Member"
-      description={`Are you sure you want to delete "${member.name}"? This action cannot be undone.`}
+      title="Delete Book"
+      description={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
     >
       <div className="flex justify-end gap-2 pt-4">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
@@ -53,4 +50,4 @@ const DeleteMemberDialog = ({ isOpen, onClose, member }) => {
   );
 };
 
-export default DeleteMemberDialog;
+export default DeleteBookDialog;

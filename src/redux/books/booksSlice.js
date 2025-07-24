@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -188,7 +187,6 @@ const booksSlice = createSlice({
       .addCase(fetchBooks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Fetch single book
@@ -203,7 +201,6 @@ const booksSlice = createSlice({
       .addCase(fetchBookById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Create book
@@ -223,12 +220,10 @@ const booksSlice = createSlice({
           genre: action.payload.genre?.name || "Unknown Genre",
         });
         state.successMessage = "Book created successfully!";
-        toast.success("Book created successfully!");
       })
       .addCase(createBook.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Update book
@@ -253,13 +248,11 @@ const booksSlice = createSlice({
         if (state.currentBook && state.currentBook.id === updatedBook.id) {
           state.currentBook = updatedBook;
         }
-        state.successMessage = "Book updated successfully!";
-        toast.success("Book updated successfully!");
+        state.successMessage = "Book updated successfully!"; // Keep this
       })
       .addCase(updateBook.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Delete book
@@ -274,12 +267,10 @@ const booksSlice = createSlice({
           state.currentBook = null;
         }
         state.successMessage = "Book deleted successfully!";
-        toast.success("Book deleted successfully!");
       })
       .addCase(deleteBook.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       });
   },
 });

@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import AddBookDialog from "../../components/librarian/AddBookDialog";
 import EditBookDialog from "../../components/librarian/EditBookDialog";
 import ViewBookDialog from "../../components/librarian/ViewBookDialog";
+import DeleteBookDialog from "../../components/librarian/DeleteBookDialog";
 import BookCard from "../../components/common/BookCard";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -80,8 +81,6 @@ const BooksSearch = ({ searchQuery, onChange, isLoading }) => (
 
 const BooksPage = React.memo(() => {
   const { books, booksLoading, token, isAdmin } = useBooks();
-  console.log("BooksPage rendered with books:", books);
-
   const dispatch = useDispatch();
   const initialData = { searchQuery: "" };
   const validate = () => ({});
@@ -90,6 +89,8 @@ const BooksPage = React.memo(() => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = React.useState(false);
   const [selectedBook, setSelectedBook] = React.useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [bookToDelete, setBookToDelete] = React.useState(null);
 
   const filteredBooks = useMemo(() => {
     return books.filter((book) =>
@@ -109,16 +110,10 @@ const BooksPage = React.memo(() => {
     setIsEditDialogOpen(true);
   }, []);
 
-  const handleDeleteBook = React.useCallback(
-    (book) => {
-      if (window.confirm(`Are you sure you want to delete ${book.title}?`)) {
-        dispatch(deleteBook(book.id)).then(() => {
-          toast.success("Book deleted successfully");
-        });
-      }
-    },
-    [dispatch]
-  );
+  const handleDeleteBook = React.useCallback((book) => {
+    setBookToDelete(book);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
   return (
     <main className={cn("flex-1 overflow-auto p-6", isAdmin && "bg-gray-100")}>
@@ -171,6 +166,15 @@ const BooksPage = React.memo(() => {
         isOpen={isViewDialogOpen}
         onClose={() => setIsViewDialogOpen(false)}
         book={selectedBook}
+      />
+
+      <DeleteBookDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setBookToDelete(null);
+        }}
+        book={bookToDelete}
       />
     </main>
   );

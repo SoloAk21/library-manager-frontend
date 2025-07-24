@@ -1,5 +1,11 @@
 import React from "react";
-import { EyeIcon, PencilIcon, TrashIcon, UserIcon } from "../../ui/icons";
+import {
+  EyeIcon,
+  SquarePenIcon,
+  TrashIcon,
+  UserIcon,
+  ShieldIcon,
+} from "../../ui/icons";
 import Button from "../../ui/Button";
 import Badge from "../../ui/Badge";
 
@@ -9,25 +15,44 @@ const StaffCard = ({ staff, loading, onView, onEdit, onDelete, isAdmin }) => {
     text: isActive ? "Active" : "Inactive",
   });
 
-  console.log("Rendering StaffCard for:", staff);
+  const getRoleIcon = () => {
+    if (staff.role === "admin") {
+      return <ShieldIcon className="mr-2 h-5 w-5 text-red-500" />;
+    }
+    return <UserIcon className="mr-2 h-5 w-5 text-blue-500" />;
+  };
+
+  const getRoleBadgeVariant = () => {
+    return staff.role === "admin" ? "destructive" : "default";
+  };
+
+  const formatCreatedDate = () => {
+    if (staff.createdAt) {
+      return new Date(staff.createdAt).toLocaleDateString();
+    }
+    return "Jan 1, 2023";
+  };
+
+  const formatPhoneNumber = () => {
+    if (staff.phone) {
+      return staff.phone;
+    }
+    return "(555) 000-0000";
+  };
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-sm hover:shadow-md transition-shadow">
       <div className="flex flex-col space-y-1.5 p-6">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="font-semibold tracking-tight text-lg flex items-center">
-              {staff.role === "admin" ? (
-                <UserIcon className="mr-2 h-5 w-5 text-red-500" />
-              ) : (
-                <UserIcon className="mr-2 h-5 w-5" />
-              )}
+              {getRoleIcon()}
               {staff.username}
             </div>
             <div className="text-sm text-muted-foreground">{staff.email}</div>
           </div>
           <div className="flex flex-col space-y-1">
-            <Badge variant={staff.role === "admin" ? "destructive" : "default"}>
+            <Badge variant={getRoleBadgeVariant()}>
               {staff.role.toUpperCase()}
             </Badge>
             <Badge {...getStatusProps(staff.isActive)}>
@@ -39,11 +64,14 @@ const StaffCard = ({ staff, loading, onView, onEdit, onDelete, isAdmin }) => {
       <div className="p-6 pt-0">
         <div className="space-y-2">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Phone:</span> {staff.phone || "N/A"}
+            <span className="font-medium">Phone:</span> {formatPhoneNumber()}
           </p>
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Created:</span>{" "}
-            {new Date(staff.createdAt).toLocaleDateString()}
+            <span className="font-medium">Created:</span> {formatCreatedDate()}
+          </p>
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">Role:</span>{" "}
+            {staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
           </p>
         </div>
         {isAdmin && (
@@ -62,7 +90,7 @@ const StaffCard = ({ staff, loading, onView, onEdit, onDelete, isAdmin }) => {
               onClick={() => onEdit(staff)}
               disabled={loading}
             >
-              <PencilIcon className="h-4 w-4" />
+              <SquarePenIcon className="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"

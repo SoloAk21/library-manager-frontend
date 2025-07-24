@@ -16,6 +16,7 @@ import { PlusIcon, SearchIcon } from "../../components/ui/icons";
 import useForm from "../../hooks/useForm";
 import { cn } from "../../utils/cn";
 import HistoryDialog from "../../components/admin/members/HistoryDialog";
+import DeleteMemberDialog from "../../components/admin/members/DeleteMemberDialog";
 
 // Custom hook for members logic
 const useMembers = () => {
@@ -80,8 +81,7 @@ const MembersSearch = ({ searchQuery, onChange, isLoading }) => (
 );
 
 const MembersPage = React.memo(() => {
-  const { members, membersLoading, token, isAdmin } = useMembers();
-  const dispatch = useDispatch();
+  const { members, membersLoading, isAdmin } = useMembers();
   const initialData = { searchQuery: "" };
   const validate = () => ({});
   const { formData, handleChange } = useForm(initialData, validate);
@@ -90,7 +90,8 @@ const MembersPage = React.memo(() => {
   const [isViewDialogOpen, setIsViewDialogOpen] = React.useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
   const [selectedMember, setSelectedMember] = React.useState(null);
-
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [memberToDelete, setMemberToDelete] = React.useState(null);
   const filteredMembers = useMemo(() => {
     return members.filter((member) =>
       `${member.name} ${member.email} ${member.phone}`
@@ -114,16 +115,10 @@ const MembersPage = React.memo(() => {
     setIsEditDialogOpen(true);
   }, []);
 
-  const handleDeleteMember = React.useCallback(
-    (member) => {
-      if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
-        dispatch(deleteMember(member.id)).then(() => {
-          toast.success("Member deleted successfully");
-        });
-      }
-    },
-    [dispatch]
-  );
+  const handleDeleteMember = React.useCallback((member) => {
+    setMemberToDelete(member);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
   return (
     <main className={cn("flex-1 overflow-auto p-6", isAdmin && "bg-gray-100")}>
@@ -182,6 +177,14 @@ const MembersPage = React.memo(() => {
         isOpen={isHistoryDialogOpen}
         onClose={() => setIsHistoryDialogOpen(false)}
         member={selectedMember}
+      />
+      <DeleteMemberDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setMemberToDelete(null);
+        }}
+        member={memberToDelete}
       />
     </main>
   );

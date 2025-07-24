@@ -1,11 +1,11 @@
 import React from "react";
 import Button from "../../ui/Button";
-import { PencilIcon, TrashIcon } from "../../ui/icons";
+import { SquarePenIcon, TrashIcon } from "../../ui/icons";
 
 const GenreCard = React.memo(
   ({ genre, onEdit, onDelete, loading, isAdmin }) => {
     return (
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
+      <div className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-sm hover:shadow-md transition-shadow">
         <div className="flex flex-col space-y-1.5 p-6 pb-3">
           <div className="flex justify-between items-center">
             <div className="font-semibold tracking-tight text-lg">
@@ -19,7 +19,7 @@ const GenreCard = React.memo(
                   onClick={() => onEdit(genre)}
                   disabled={loading}
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <SquarePenIcon className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="secondary"

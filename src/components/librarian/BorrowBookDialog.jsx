@@ -5,7 +5,6 @@ import Dialog from "../common/Dialog";
 import Button from "../ui/Button";
 import Select from "../ui/Select";
 import { CalendarIcon } from "../ui/icons";
-import useForm from "../../hooks/useForm";
 import { borrowBook } from "../../redux/borrowRecords/borrowRecordsSlice";
 import { fetchBooks } from "../../redux/books/booksSlice";
 import { fetchMembers } from "../../redux/members/membersSlice";
@@ -31,18 +30,15 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
     form: "",
   });
 
-  // Fetch data when dialog opens
   useEffect(() => {
     if (isOpen) {
       dispatch(fetchBooks());
       dispatch(fetchMembers());
-      // Reset form when opening
       setFormData({ bookId: "", memberId: "" });
       setErrors({ bookId: "", memberId: "", form: "" });
     }
   }, [isOpen, dispatch]);
 
-  // Handle API errors
   useEffect(() => {
     if (borrowError) {
       setErrors((prev) => ({
@@ -55,28 +51,16 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
 
   const availableBooks = books.filter((book) => book.availableCopies > 0);
 
-  // Helper function to parse API errors
   const parseApiError = (error) => {
-    if (typeof error === "string") {
-      return error;
-    }
-
-    if (error.message) {
-      return error.message;
-    }
-
-    // Handle validation errors from backend
-    if (Array.isArray(error)) {
-      return error.map((err) => err.message).join(", ");
-    }
-
+    if (typeof error === "string") return error;
+    if (error.message) return error.message;
+    if (Array.isArray(error)) return error.map((err) => err.message).join(", ");
     return "An unknown error occurred";
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (errors[name] || errors.form) {
       setErrors((prev) => ({ ...prev, [name]: "", form: "" }));
     }
@@ -116,13 +100,12 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14); // 2 weeks from now
+      dueDate.setDate(dueDate.getDate() + 14);
 
       await dispatch(
         borrowBook({
@@ -135,7 +118,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
       toast.success("Book borrowed successfully!");
       onClose();
     } catch (error) {
-      // Error is already handled by the useEffect hook
+      // Error handled by useEffect
     } finally {
       setIsSubmitting(false);
     }
@@ -148,53 +131,76 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
       title="Borrow Book"
       description="Select a book and member to create a new borrow record."
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {errors.form && (
           <div className="rounded-md bg-red-50 p-4">
             <p className="text-sm text-red-600">{errors.form}</p>
           </div>
         )}
-        <Select
-          id="bookId"
-          name="bookId"
-          value={formData.bookId}
-          onChange={handleChange}
-          error={errors.bookId}
-          disabled={booksLoading || isSubmitting}
-        >
-          <option value="">
-            {booksLoading ? "Loading books..." : "Select a book"}
-          </option>
-          {availableBooks.map((book) => (
-            <option key={book.id} value={book.id}>
-              {book.title} by {book.author} • {book.availableCopies} available
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Select Member
+          </label>
+          <Select
+            id="memberId"
+            name="memberId"
+            value={formData.memberId}
+            onChange={handleChange}
+            error={errors.memberId}
+            disabled={membersLoading || isSubmitting}
+            className="w-full"
+          >
+            <option value="" hidden>
+              {membersLoading ? "Loading members..." : "Select a member"}
             </option>
-          ))}
-        </Select>
-        <Select
-          id="memberId"
-          name="memberId"
-          value={formData.memberId}
-          onChange={handleChange}
-          error={errors.memberId}
-          disabled={membersLoading || isSubmitting}
-        >
-          <option value="">
-            {membersLoading ? "Loading members..." : "Select a member"}
-          </option>
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name} ({member.email})
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                <div className="py-1">
+                  <div className="font-medium">{member.name}</div>
+                  <div className="text-sm text-gray-500">{member.email}</div>
+                </div>
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Select Book
+          </label>
+          <Select
+            id="bookId"
+            name="bookId"
+            value={formData.bookId}
+            onChange={handleChange}
+            error={errors.bookId}
+            disabled={booksLoading || isSubmitting}
+            className="w-full"
+          >
+            <option value="" hidden>
+              {booksLoading ? "Loading books..." : "Select a book"}
             </option>
-          ))}
-        </Select>
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            {availableBooks.map((book) => (
+              <option key={book.id} value={book.id}>
+                <div className="py-1">
+                  <div className="font-medium">{book.title}</div>
+                  <div className="text-sm text-gray-500">
+                    by {book.author} • {book.availableCopies} available
+                  </div>
+                </div>
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-primary/10">
           <div>
             <label className="text-sm font-medium text-gray-600">
               Borrow Date
             </label>
             <div className="flex items-center mt-1 text-sm">
-              <CalendarIcon />
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {format(new Date(), "MMMM do, yyyy")}
             </div>
           </div>
@@ -203,7 +209,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
               Due Date
             </label>
             <div className="flex items-center mt-1 text-sm">
-              <CalendarIcon />
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {format(
                 new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
                 "MMMM do, yyyy"
@@ -211,6 +217,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
             </div>
           </div>
         </div>
+
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel

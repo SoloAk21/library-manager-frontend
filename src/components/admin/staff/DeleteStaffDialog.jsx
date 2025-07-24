@@ -3,18 +3,19 @@ import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
 import { useDispatch } from "react-redux";
 import { deleteStaff } from "../../../redux/staff/staffSlice";
-import toast from "react-hot-toast";
+import { useToast } from "../../../context/ToastContext";
 
 const DeleteStaffDialog = ({ isOpen, onClose, staff, isLoading }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
 
   const handleConfirm = async () => {
     try {
       await dispatch(deleteStaff(staff.id)).unwrap();
-      toast.success("Staff deleted successfully!");
+      showToast("Staff deleted successfully!", "success", "Deleted");
       onClose();
     } catch (error) {
-      toast.error(error || "Failed to delete staff");
+      showToast(error || "Failed to delete staff", "error", "Error");
     }
   };
 

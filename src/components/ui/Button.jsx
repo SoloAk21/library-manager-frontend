@@ -4,7 +4,7 @@ import { cn } from "../../utils/cn";
 
 const Button = ({
   variant = "primary",
-  size = "md",
+  size = "sm",
   disabled,
   isLoading,
   children,

@@ -1,60 +1,106 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
 import Input from "../../ui/Input";
-import { useDispatch } from "react-redux";
-import { updateStaff } from "../../../redux/staff/staffSlice";
-import toast from "react-hot-toast";
+import Select from "../../ui/Select";
+import { updateStaff, clearMessages } from "../../../redux/staff/staffSlice";
+import { useToast } from "../../../context/ToastContext";
 
-const EditStaffDialog = ({ isOpen, onClose, staff, isLoading }) => {
+const EditStaffDialog = ({ isOpen, onClose, staff }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
+  const { loading, error, successMessage } = useSelector(
+    (state) => state.staff
+  );
+
+  // Static phone numbers based on role
+  const PHONE_NUMBERS = {
+    librarian: "(555) 987-6543",
+    admin: "(555) 123-4567",
+  };
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    phone: "",
     role: "librarian",
-    isActive: true,
   });
 
-  useEffect(() => {
-    if (staff) {
-      setFormData({
-        username: staff.username,
-        email: staff.email,
-        phone: staff.phone || "",
-        role: staff.role,
-        isActive: staff.isActive,
-      });
+  const [errors, setErrors] = useState({});
+  const prevSuccessMessage = useRef(null);
+  const prevError = useRef(null);
+
+  const initializeForm = (staffData) => {
+    return {
+      username: staffData?.username || "",
+      email: staffData?.email || "",
+      role: staffData?.role || "librarian",
+    };
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.username.trim()) newErrors.username = "Username is required";
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
     }
-  }, [staff]);
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-  const handleToggleActive = () => {
-    setFormData((prev) => ({
-      ...prev,
-      isActive: !prev.isActive,
-    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await dispatch(
-        updateStaff({ staffId: staff.id, staffData: formData })
-      ).unwrap();
-      toast.success("Staff updated successfully!");
-      onClose();
-    } catch (error) {
-      toast.error(error || "Failed to update staff");
-    }
+    if (!validateForm()) return;
+
+    dispatch(
+      updateStaff({
+        staffId: staff.id,
+        staffData: formData,
+      })
+    );
   };
+
+  useEffect(() => {
+    if (staff) {
+      setFormData(initializeForm(staff));
+    }
+  }, [staff]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch(clearMessages());
+    }
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (error && error !== prevError.current) {
+      showToast(error, "error", "Update Failed");
+      dispatch(clearMessages());
+    }
+
+    if (successMessage && successMessage !== prevSuccessMessage.current) {
+      showToast(successMessage, "success", "Staff Updated");
+      dispatch(clearMessages());
+      setTimeout(() => onClose(), 1500);
+    }
+
+    prevSuccessMessage.current = successMessage;
+    prevError.current = error;
+  }, [error, successMessage, dispatch, onClose, showToast]);
 
   if (!staff) return null;
 
@@ -62,68 +108,68 @@ const EditStaffDialog = ({ isOpen, onClose, staff, isLoading }) => {
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Edit Staff"
+      title="Edit Staff Member"
       description="Update the staff member information below."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {Object.values(errors).some(Boolean) && (
+          <div className="rounded-md bg-red-50 p-4">
+            <p className="text-sm text-red-600">
+              Please fix the errors in the form.
+            </p>
+          </div>
+        )}
+
         <Input
           id="username"
           name="username"
           label="Username"
           value={formData.username}
           onChange={handleChange}
+          error={errors.username}
           required
           placeholder="Enter username"
         />
+
         <Input
           id="email"
           name="email"
           label="Email Address"
           value={formData.email}
           onChange={handleChange}
+          error={errors.email}
           required
           type="email"
           placeholder="Enter email address"
         />
+
         <Input
           id="phone"
           name="phone"
           label="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
+          value={PHONE_NUMBERS[formData.role]}
+          disabled
           type="tel"
-          placeholder="Enter phone number"
+          placeholder="Phone number (auto-generated)"
         />
-        <div className="grid gap-2">
-          <label className="text-sm font-medium">Role</label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="librarian">Librarian</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={formData.isActive}
-            onChange={handleToggleActive}
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-          />
-          <label htmlFor="isActive" className="text-sm font-medium">
-            Active Status
-          </label>
-        </div>
+
+        <Select
+          id="role"
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          label="Role"
+          required
+        >
+          <option value="librarian">Librarian</option>
+          <option value="admin">Admin</option>
+        </Select>
+
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={isLoading} disabled={isLoading}>
+          <Button type="submit" isLoading={loading} disabled={loading}>
             Update Staff
           </Button>
         </div>

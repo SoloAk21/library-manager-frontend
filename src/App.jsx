@@ -6,14 +6,13 @@ import PrivateRoute from "./components/common/PrivateRoute";
 import DashboardPage from "./pages/common/DashboardPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import ManageGenresPage from "./pages/admin/ManageGenresPage";
-import ManageStaffPage from "./pages/admin/ManageStaffPage";
 import MainContent from "./pages/common/MainContent";
-import BooksPage from "./pages/common/BooksPage";
 import BorrowRecordsPage from "./pages/common/BorrowRecordsPage";
 import ProfilePage from "./pages/common/ProfilePage";
 import { useSelector } from "react-redux";
 import MembersPage from "./pages/admin/MembersPage";
 import StaffManagement from "./pages/admin/StaffManagement";
+import BooksPage from "./pages/common/BooksPage";
 
 function App() {
   const { user } = useSelector((state) => state.auth);

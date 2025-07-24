@@ -1,20 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
 import Input from "../../ui/Input";
-import { useDispatch, useSelector } from "react-redux";
-import { createMember } from "../../../redux/members/membersSlice";
-import toast from "react-hot-toast";
-import Dialog from "../../common/Dialog";
+import {
+  createMember,
+  clearMessages,
+} from "../../../redux/members/membersSlice";
+import { useToast } from "../../../context/ToastContext";
 
 const AddMemberDialog = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.members);
+  const { showToast } = useToast();
+  const { loading, error, successMessage } = useSelector(
+    (state) => state.members
+  );
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
   });
   const [errors, setErrors] = useState({});
+  const prevSuccessMessage = useRef(null);
+  const prevError = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ name: "", email: "", phone: "" });
+      setErrors({});
+      dispatch(clearMessages());
+    }
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    let toastId = null;
+
+    if (successMessage && successMessage !== prevSuccessMessage.current) {
+      showToast(successMessage, "success", "Success");
+      dispatch(clearMessages());
+      setTimeout(() => onClose(), 1500);
+    }
+
+    if (error && error !== prevError.current) {
+      showToast(error, "error", "Error");
+      dispatch(clearMessages());
+    }
+
+    prevSuccessMessage.current = successMessage;
+    prevError.current = error;
+
+    return () => {
+      if (toastId) {
+        toastId.dismiss();
+      }
+    };
+  }, [successMessage, error, dispatch, onClose, showToast]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,14 +79,7 @@ const AddMemberDialog = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    try {
-      await dispatch(createMember(formData)).unwrap();
-      toast.success("Member created successfully!");
-      onClose();
-      setFormData({ name: "", email: "", phone: "" });
-    } catch (error) {
-      toast.error(error.message || "Failed to create member");
-    }
+    dispatch(createMember(formData));
   };
 
   return (

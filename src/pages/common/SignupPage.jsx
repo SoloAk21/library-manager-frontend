@@ -2,20 +2,20 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { signup, clearMessages } from "../../redux/auth/authSlice";
-import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import { BookOpenIcon } from "../../components/ui/icons";
 import useForm from "../../hooks/useForm";
 import { cn } from "../../utils/cn";
+import { useToast } from "../../context/ToastContext";
 
 const SignupPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { loading, error, successMessage } = useSelector((state) => state.auth);
 
-  // Form handling
   const initialData = {
     username: "",
     email: "",
@@ -40,18 +40,17 @@ const SignupPage = () => {
     validate
   );
 
-  // Handle messages and navigation
   useEffect(() => {
     if (error) {
-      toast.error(error);
+      showToast(error, "error", "Error");
       dispatch(clearMessages());
     }
     if (successMessage) {
-      toast.success(successMessage);
-      setTimeout(() => navigate("/login"), 1500);
+      showToast(successMessage, "success", "Success");
       dispatch(clearMessages());
+      setTimeout(() => navigate("/login"), 1500);
     }
-  }, [error, successMessage, dispatch, navigate]);
+  }, [error, successMessage, dispatch, navigate, showToast]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -67,7 +66,6 @@ const SignupPage = () => {
       )}
     >
       <div className="rounded-lg border border-primary/10 bg-white shadow-sm w-full max-w-md">
-        {/* Header */}
         <div className="flex flex-col space-y-1.5 p-6 text-center">
           <div className="flex justify-center mb-4">
             <BookOpenIcon className="h-12 w-12 text-blue-600" />
@@ -75,10 +73,9 @@ const SignupPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">
             Create Your Account
           </h1>
-          <p className="text-sm text-gray-500">Join our library community</p>
+          <p className="text-sm text-gray-600">Join our library community</p>
         </div>
 
-        {/* Form */}
         <div className="p-6 pt-0">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <Input
@@ -123,10 +120,11 @@ const SignupPage = () => {
               value={formData.role}
               onChange={handleChange}
               disabled={loading}
-            >
-              <option value="admin">Admin</option>
-              <option value="librarian">Librarian</option>
-            </Select>
+              options={[
+                { value: "admin", label: "Admin" },
+                { value: "librarian", label: "Librarian" },
+              ]}
+            />
 
             <Button type="submit" className="w-full" isLoading={loading}>
               Create Account

@@ -21,44 +21,59 @@ const HistoryDialog = ({ isOpen, onClose, member }) => {
       onClose={onClose}
       title={`${member?.name || "Member"} Borrowing History`}
       description="View the borrowing history for this member."
+      size="full"
     >
       {loading ? (
-        <div className="flex justify-center py-4">
+        <div className="flex justify-center py-6">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : borrowingHistory.length === 0 ? (
-        <p className="text-center text-gray-600 py-4">
+        <p className="text-center text-gray-600 py-6">
           No borrowing history available.
         </p>
       ) : (
-        <div className="space-y-4 py-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2 py-4">
           {borrowingHistory.map((record) => (
-            <div key={record.id} className="border p-4 rounded-md">
-              <h4 className="font-medium">{record.bookTitle}</h4>
-              <p className="text-sm text-gray-600">
-                Borrow Date:{" "}
-                {format(new Date(record.borrowDate), "MMMM do, yyyy")}
-              </p>
-              <p className="text-sm text-gray-600">
-                Due Date: {format(new Date(record.dueDate), "MMMM do, yyyy")}
-              </p>
-              <p className="text-sm text-gray-600">
-                Return Date:{" "}
-                {record.returnDate
-                  ? format(new Date(record.returnDate), "MMMM do, yyyy")
-                  : "Not returned"}
-              </p>
-              <Badge
-                variant={
-                  record.status === "overdue"
-                    ? "destructive"
-                    : record.status === "returned"
-                    ? "secondary"
-                    : "primary"
-                }
-              >
-                {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-              </Badge>
+            <div
+              key={record.id}
+              className="rounded-lg border border-primary/10 bg-white text-card-foreground shadow-xs hover:shadow-md transition-shadow p-6"
+            >
+              <div className="flex flex-col gap-3">
+                <h4 className="font-semibold text-lg text-gray-900">
+                  {record.bookTitle}
+                </h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>
+                    <span className="font-medium">Borrowed:</span>{" "}
+                    {format(new Date(record.borrowDate), "MMM d, yyyy")}
+                  </p>
+                  <p>
+                    <span className="font-medium">Due:</span>{" "}
+                    {format(new Date(record.dueDate), "MMM d, yyyy")}
+                  </p>
+                  <p>
+                    <span className="font-medium">Returned:</span>{" "}
+                    {record.returnDate
+                      ? format(new Date(record.returnDate), "MMM d, yyyy")
+                      : "Not returned"}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Badge
+                    variant={
+                      record.status === "overdue"
+                        ? "destructive"
+                        : record.status === "returned"
+                        ? "secondary"
+                        : "primary"
+                    }
+                    className="text-sm"
+                  >
+                    {record.status.charAt(0).toUpperCase() +
+                      record.status.slice(1)}
+                  </Badge>
+                </div>
+              </div>
             </div>
           ))}
         </div>

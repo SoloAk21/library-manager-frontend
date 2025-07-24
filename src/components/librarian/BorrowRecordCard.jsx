@@ -19,7 +19,7 @@ const BorrowRecordCard = React.memo(({ record, onReturn, loading }) => {
   };
 
   return (
-    <div className="rounded-lg border  bg-white shadow-sm">
+    <div className="rounded-lg border border-primary/10 bg-white shadow-sm">
       <div className="flex flex-col space-y-1.5 p-6">
         <div className="flex justify-between items-start">
           <div className="flex-1">

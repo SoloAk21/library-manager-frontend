@@ -10,9 +10,19 @@ export const login = createAsyncThunk(
       const res = await axios.post(`${API_BASE_URL}/login`, credentials);
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || "Login failed"
-      );
+      let errorMessage = "Login failed";
+
+      if (err.response?.data?.message) {
+        if (Array.isArray(err.response.data.message)) {
+          errorMessage = err.response.data.message.join("\n");
+        } else {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      return thunkAPI.rejectWithValue(errorMessage);
     }
   }
 );
@@ -24,8 +34,18 @@ export const signup = createAsyncThunk(
       const res = await axios.post(`${API_BASE_URL}/signup`, data);
       return res.data;
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || err.response?.data || "Signup failed";
+      let errorMessage = "Signup failed";
+
+      if (err.response?.data?.message) {
+        if (Array.isArray(err.response.data.message)) {
+          errorMessage = err.response.data.message.join("\n");
+        } else {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
       return thunkAPI.rejectWithValue(errorMessage);
     }
   }
@@ -47,14 +67,23 @@ export const fetchProfile = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || "Failed to fetch profile"
-      );
+      let errorMessage = "Failed to fetch profile";
+
+      if (err.response?.data?.message) {
+        if (Array.isArray(err.response.data.message)) {
+          errorMessage = err.response.data.message.join("\n");
+        } else {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      return thunkAPI.rejectWithValue(errorMessage);
     }
   }
 );
 
-// New thunk to fetch all users (for debugging)
 export const fetchUsers = createAsyncThunk(
   "auth/fetchUsers",
   async (_, thunkAPI) => {
@@ -69,11 +98,21 @@ export const fetchUsers = createAsyncThunk(
       const res = await axios.get(`${API_BASE_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return res.data; // List of users
+      return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || "Failed to fetch users"
-      );
+      let errorMessage = "Failed to fetch users";
+
+      if (err.response?.data?.message) {
+        if (Array.isArray(err.response.data.message)) {
+          errorMessage = err.response.data.message.join("\n");
+        } else {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      return thunkAPI.rejectWithValue(errorMessage);
     }
   }
 );
@@ -86,7 +125,7 @@ const authSlice = createSlice({
   initialState: {
     user: storedUser || null,
     token: storedToken || null,
-    users: [], // Added to store list of users
+    users: [],
     loading: false,
     error: null,
     successMessage: null,
@@ -96,7 +135,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      state.users = []; // Clear users on logout
+      state.users = [];
       state.error = null;
       state.successMessage = null;
       state.isAuthenticated = false;
@@ -110,7 +149,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -129,7 +167,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Signup
       .addCase(signup.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -143,7 +180,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Fetch Profile
       .addCase(fetchProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -158,14 +194,13 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Fetch Users
       .addCase(fetchUsers.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload; // Store list of users
+        state.users = action.payload;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;

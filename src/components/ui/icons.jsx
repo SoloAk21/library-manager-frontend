@@ -294,7 +294,6 @@ export const EyeIcon = ({ className = "" }) => (
     <circle cx="12" cy="12" r="3"></circle>
   </svg>
 );
-
 export const SquarePenIcon = ({ className = "" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -306,16 +305,12 @@ export const SquarePenIcon = ({ className = "" }) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={`lucide lucide-square-pencil ${className}`}
+    className={`lucide lucide-square-pen h-4 w-4 ${className}`}
   >
-    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-    <path d="M9 9h.01"></path>
-    <path d="M15 9h.01"></path>
-    <path d="M9 15h.01"></path>
-    <path d="M15 15h.01"></path>
+    <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
   </svg>
 );
-
 export const PencilIcon = ({ className = "" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -570,5 +565,23 @@ export const XCircleIcon = ({ className = "" }) => (
     <path d="M12 22a10 10 0 1 1 10-10 10.011 10.011 0 0 1-10 10z"></path>
     <line x1="15" y1="9" x2="9" y2="15"></line>
     <line x1="9" y1="9" x2="15" y2="15"></line>
+  </svg>
+);
+
+export const EmailIcon = ({ className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="lucide lucide-mail mr-2 h-4 w-4"
+  >
+    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
   </svg>
 );

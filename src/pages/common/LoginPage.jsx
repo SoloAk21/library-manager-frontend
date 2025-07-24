@@ -2,15 +2,17 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { login, clearMessages } from "../../redux/auth/authSlice";
-import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import { BookOpenIcon } from "../../components/ui/icons";
 import useForm from "../../hooks/useForm";
+import { useToast } from "../../context/ToastContext";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
   const { loading, error, successMessage, token } = useSelector(
     (state) => state.auth
   );
@@ -36,9 +38,15 @@ const LoginPage = () => {
   }, [token, navigate, dispatch]);
 
   useEffect(() => {
-    if (error) toast.error(error);
-    if (successMessage) toast.success(successMessage);
-  }, [error, successMessage]);
+    if (error) {
+      showToast(error, "error", "Error");
+      dispatch(clearMessages());
+    }
+    if (successMessage) {
+      showToast(successMessage, "success", "Success");
+      dispatch(clearMessages());
+    }
+  }, [error, successMessage, dispatch, showToast]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -56,7 +64,7 @@ const LoginPage = () => {
           <div className="tracking-tight text-2xl font-bold">
             Library Manager System
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
             Sign in to your account to continue
           </div>
         </div>
@@ -96,7 +104,7 @@ const LoginPage = () => {
               </Link>
             </div>
             <div>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 to="/signup"
                 className="text-primary hover:underline font-medium"

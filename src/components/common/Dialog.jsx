@@ -51,11 +51,11 @@ const Dialog = ({
         )}
       >
         <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-          <h2 id="dialog-title" className="text-lg font-semibold text-gray-900">
+          <h2 id="dialog-title" className="text-lg font-semibold text-primary">
             {title}
           </h2>
           {description && (
-            <p id="dialog-description" className="text-sm text-gray-500">
+            <p id="dialog-description" className="text-sm text-primary/70">
               {description}
             </p>
           )}

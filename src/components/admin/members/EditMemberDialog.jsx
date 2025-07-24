@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
 import Input from "../../ui/Input";
@@ -6,18 +6,23 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   updateMember,
   fetchMemberById,
+  clearMessages,
 } from "../../../redux/members/membersSlice";
 import toast from "react-hot-toast";
 
 const EditMemberDialog = ({ isOpen, onClose, member }) => {
   const dispatch = useDispatch();
-  const { loading, currentMember } = useSelector((state) => state.members);
+  const { loading, currentMember, error, successMessage } = useSelector(
+    (state) => state.members
+  );
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
   });
   const [errors, setErrors] = useState({});
+  const prevSuccessMessage = useRef(null);
+  const prevError = useRef(null);
 
   useEffect(() => {
     if (isOpen && member?.id) {
@@ -35,6 +40,41 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
       setErrors({});
     }
   }, [currentMember]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch(clearMessages());
+    }
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    let toastId = null;
+
+    if (successMessage && successMessage !== prevSuccessMessage.current) {
+      toastId = toast.success(successMessage, {
+        id: "success",
+        data: { title: "Success" },
+      });
+      dispatch(clearMessages());
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    }
+
+    if (error && error !== prevError.current) {
+      toastId = toast.error(error, { id: "error", data: { title: "Error" } });
+      dispatch(clearMessages());
+    }
+
+    prevSuccessMessage.current = successMessage;
+    prevError.current = error;
+
+    return () => {
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
+    };
+  }, [successMessage, error, dispatch, onClose]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,15 +99,7 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    try {
-      await dispatch(
-        updateMember({ memberId: member.id, memberData: formData })
-      ).unwrap();
-      toast.success("Member updated successfully!");
-      onClose();
-    } catch (error) {
-      toast.error(error.message || "Failed to update member");
-    }
+    dispatch(updateMember({ memberId: member.id, memberData: formData }));
   };
 
   return (
