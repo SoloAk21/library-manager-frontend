@@ -25,12 +25,7 @@ const SignupPage = () => {
 
   const validate = (data) => {
     const errors = {};
-    if (!data.username.trim()) errors.username = "Username is required";
-    if (!data.email.trim()) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(data.email))
-      errors.email = "Invalid email format";
-    if (!data.password.trim()) errors.password = "Password is required";
-    else if (data.password.length < 6)
+    if (data.password.length < 6)
       errors.password = "Password must be at least 6 characters";
     return errors;
   };
@@ -42,11 +37,11 @@ const SignupPage = () => {
 
   useEffect(() => {
     if (error) {
-      showToast(error, "error", "Error");
+      showToast(error, "error", "Signup Failed");
       dispatch(clearMessages());
     }
     if (successMessage) {
-      showToast(successMessage, "success", "Success");
+      showToast(successMessage, "success", "Signup Success");
       dispatch(clearMessages());
       setTimeout(() => navigate("/login"), 1500);
     }
@@ -87,6 +82,7 @@ const SignupPage = () => {
               error={errors.username}
               placeholder="Enter your username"
               disabled={loading}
+              required
             />
 
             <Input
@@ -99,6 +95,7 @@ const SignupPage = () => {
               error={errors.email}
               placeholder="Enter your email"
               disabled={loading}
+              required
             />
 
             <Input
@@ -111,6 +108,7 @@ const SignupPage = () => {
               error={errors.password}
               placeholder="Enter your password"
               disabled={loading}
+              required
             />
 
             <Select
@@ -124,6 +122,7 @@ const SignupPage = () => {
                 { value: "admin", label: "Admin" },
                 { value: "librarian", label: "Librarian" },
               ]}
+              required
             />
 
             <Button type="submit" className="w-full" isLoading={loading}>
