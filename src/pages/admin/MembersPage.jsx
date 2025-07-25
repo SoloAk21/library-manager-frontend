@@ -1,11 +1,6 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchMembers,
-  clearMessages,
-  deleteMember,
-} from "../../redux/members/membersSlice";
-import toast from "react-hot-toast";
+import { fetchMembers, clearMessages } from "../../redux/members/membersSlice";
 import AddMemberDialog from "../../components/admin/members/AddMemberDialog";
 import EditMemberDialog from "../../components/admin/members/EditMemberDialog";
 import ViewMemberDialog from "../../components/admin/members/ViewMemberDialog";
@@ -21,12 +16,9 @@ import DeleteMemberDialog from "../../components/admin/members/DeleteMemberDialo
 // Custom hook for members logic
 const useMembers = () => {
   const dispatch = useDispatch();
-  const {
-    members = [],
-    loading: membersLoading,
-    error,
-    successMessage,
-  } = useSelector((state) => state.members || {});
+  const { members = [], loading: membersLoading } = useSelector(
+    (state) => state.members || {}
+  );
   const { token, user } = useSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
 
@@ -35,17 +27,6 @@ const useMembers = () => {
       dispatch(fetchMembers());
     }
   }, [dispatch, token]);
-
-  React.useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearMessages());
-    }
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(clearMessages());
-    }
-  }, [error, successMessage, dispatch]);
 
   return { members, membersLoading, token, isAdmin };
 };
@@ -92,6 +73,7 @@ const MembersPage = React.memo(() => {
   const [selectedMember, setSelectedMember] = React.useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [memberToDelete, setMemberToDelete] = React.useState(null);
+
   const filteredMembers = useMemo(() => {
     return members.filter((member) =>
       `${member.name} ${member.email} ${member.phone}`

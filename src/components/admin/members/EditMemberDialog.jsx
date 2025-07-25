@@ -8,10 +8,11 @@ import {
   fetchMemberById,
   clearMessages,
 } from "../../../redux/members/membersSlice";
-import toast from "react-hot-toast";
+import { useToast } from "../../../context/ToastContext";
 
 const EditMemberDialog = ({ isOpen, onClose, member }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
   const { loading, currentMember, error, successMessage } = useSelector(
     (state) => state.members
   );
@@ -21,8 +22,7 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
     phone: "",
   });
   const [errors, setErrors] = useState({});
-  const prevSuccessMessage = useRef(null);
-  const prevError = useRef(null);
+  const toastCompletedRef = useRef(false);
 
   useEffect(() => {
     if (isOpen && member?.id) {
@@ -44,37 +44,25 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
   useEffect(() => {
     if (!isOpen) {
       dispatch(clearMessages());
+      toastCompletedRef.current = false;
     }
   }, [isOpen, dispatch]);
 
   useEffect(() => {
-    let toastId = null;
-
-    if (successMessage && successMessage !== prevSuccessMessage.current) {
-      toastId = toast.success(successMessage, {
-        id: "success",
-        data: { title: "Success" },
-      });
+    if (successMessage && isOpen && !toastCompletedRef.current) {
+      showToast(successMessage, "success", "Member Updated");
       dispatch(clearMessages());
+      toastCompletedRef.current = true;
       setTimeout(() => {
         onClose();
       }, 1500);
     }
 
-    if (error && error !== prevError.current) {
-      toastId = toast.error(error, { id: "error", data: { title: "Error" } });
+    if (error && isOpen && !toastCompletedRef.current) {
+      showToast(error, "error", "Update Member Failed");
       dispatch(clearMessages());
     }
-
-    prevSuccessMessage.current = successMessage;
-    prevError.current = error;
-
-    return () => {
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [successMessage, error, dispatch, onClose]);
+  }, [successMessage, error, dispatch, isOpen, onClose, showToast]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,13 +87,18 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    toastCompletedRef.current = false;
     dispatch(updateMember({ memberId: member.id, memberData: formData }));
   };
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!loading && !toastCompletedRef.current) {
+          onClose();
+        }
+      }}
       title="Edit Member"
       description="Update the member information below."
     >
@@ -150,7 +143,15 @@ const EditMemberDialog = ({ isOpen, onClose, member }) => {
           placeholder="Enter phone number (e.g., (555) 123-4567)"
         />
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (!loading && !toastCompletedRef.current) {
+                onClose();
+              }
+            }}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button type="submit" isLoading={loading} disabled={loading}>

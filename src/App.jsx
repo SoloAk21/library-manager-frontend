@@ -11,7 +11,7 @@ import BorrowRecordsPage from "./pages/common/BorrowRecordsPage";
 import ProfilePage from "./pages/common/ProfilePage";
 import { useSelector } from "react-redux";
 import MembersPage from "./pages/admin/MembersPage";
-import StaffManagement from "./pages/admin/StaffManagement";
+import StaffPage from "./pages/admin/StaffPage";
 import BooksPage from "./pages/common/BooksPage";
 
 function App() {

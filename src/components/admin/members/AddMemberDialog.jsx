@@ -21,40 +21,32 @@ const AddMemberDialog = ({ isOpen, onClose }) => {
     phone: "",
   });
   const [errors, setErrors] = useState({});
-  const prevSuccessMessage = useRef(null);
-  const prevError = useRef(null);
+  const toastCompletedRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
       setFormData({ name: "", email: "", phone: "" });
       setErrors({});
       dispatch(clearMessages());
+      toastCompletedRef.current = false;
     }
   }, [isOpen, dispatch]);
 
   useEffect(() => {
-    let toastId = null;
-
-    if (successMessage && successMessage !== prevSuccessMessage.current) {
-      showToast(successMessage, "success", "Success");
+    if (successMessage && isOpen && !toastCompletedRef.current) {
+      showToast(successMessage, "success", "Member Created");
       dispatch(clearMessages());
-      setTimeout(() => onClose(), 1500);
+      toastCompletedRef.current = true;
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     }
 
-    if (error && error !== prevError.current) {
-      showToast(error, "error", "Error");
+    if (error && isOpen && !toastCompletedRef.current) {
+      showToast(error, "error", "Member Creation Failed");
       dispatch(clearMessages());
     }
-
-    prevSuccessMessage.current = successMessage;
-    prevError.current = error;
-
-    return () => {
-      if (toastId) {
-        toastId.dismiss();
-      }
-    };
-  }, [successMessage, error, dispatch, onClose, showToast]);
+  }, [successMessage, error, dispatch, isOpen, onClose, showToast]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,13 +71,18 @@ const AddMemberDialog = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    toastCompletedRef.current = false;
     dispatch(createMember(formData));
   };
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!loading && !toastCompletedRef.current) {
+          onClose();
+        }
+      }}
       title="Add New Member"
       description="Enter the details for the new member."
     >
@@ -130,7 +127,15 @@ const AddMemberDialog = ({ isOpen, onClose }) => {
           placeholder="Enter phone number (e.g., (555) 123-4567)"
         />
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (!loading && !toastCompletedRef.current) {
+                onClose();
+              }
+            }}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button type="submit" isLoading={loading} disabled={loading}>

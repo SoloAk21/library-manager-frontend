@@ -21,7 +21,7 @@ const HistoryDialog = ({ isOpen, onClose, member }) => {
       onClose={onClose}
       title={`${member?.name || "Member"} Borrowing History`}
       description="View the borrowing history for this member."
-      size="full"
+      size="xl"
     >
       {loading ? (
         <div className="flex justify-center py-6">
