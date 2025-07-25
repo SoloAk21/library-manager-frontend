@@ -1,34 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
 import Dialog from "../common/Dialog";
 import Button from "../ui/Button";
 import Select from "../ui/Select";
 import { CalendarIcon } from "../ui/icons";
-import { borrowBook } from "../../redux/borrowRecords/borrowRecordsSlice";
+import {
+  borrowBook,
+  clearMessages,
+} from "../../redux/borrowRecords/borrowRecordsSlice";
 import { fetchBooks } from "../../redux/books/booksSlice";
 import { fetchMembers } from "../../redux/members/membersSlice";
-import toast from "react-hot-toast";
+import { useToast } from "../../context/ToastContext";
 
 const BorrowBookDialog = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
   const { books, loading: booksLoading } = useSelector((state) => state.books);
   const { members, loading: membersLoading } = useSelector(
     (state) => state.members
   );
-  const { error: borrowError } = useSelector((state) => state.borrowRecords);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const {
+    loading: borrowLoading,
+    error,
+    successMessage,
+  } = useSelector((state) => state.borrowRecords);
   const [formData, setFormData] = useState({
     bookId: "",
     memberId: "",
   });
-
   const [errors, setErrors] = useState({
     bookId: "",
     memberId: "",
     form: "",
   });
+  const toastCompletedRef = useRef(false);
+
+  const availableBooks = books.filter((book) => book.availableCopies > 0);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,20 +44,43 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
       dispatch(fetchMembers());
       setFormData({ bookId: "", memberId: "" });
       setErrors({ bookId: "", memberId: "", form: "" });
+      dispatch(clearMessages());
+      toastCompletedRef.current = false;
     }
   }, [isOpen, dispatch]);
 
   useEffect(() => {
-    if (borrowError) {
-      setErrors((prev) => ({
-        ...prev,
-        form: parseApiError(borrowError),
-      }));
-      setIsSubmitting(false);
+    if (successMessage && isOpen && !toastCompletedRef.current) {
+      showToast(successMessage, "success", "Book Borrowed");
+      dispatch(clearMessages());
+      toastCompletedRef.current = true;
+      setTimeout(() => {
+        if (isOpen && !borrowLoading) {
+          onClose();
+          toastCompletedRef.current = false;
+        }
+      }, 1500);
     }
-  }, [borrowError]);
 
-  const availableBooks = books.filter((book) => book.availableCopies > 0);
+    if (error && isOpen && !toastCompletedRef.current) {
+      const errorMessage = parseApiError(error);
+      setErrors((prev) => ({ ...prev, form: errorMessage }));
+      showToast(errorMessage, "error", "Borrow Failed");
+      dispatch(clearMessages());
+      toastCompletedRef.current = true;
+      setTimeout(() => {
+        toastCompletedRef.current = false;
+      }, 1500);
+    }
+  }, [
+    successMessage,
+    error,
+    dispatch,
+    isOpen,
+    onClose,
+    showToast,
+    borrowLoading,
+  ]);
 
   const parseApiError = (error) => {
     if (typeof error === "string") return error;
@@ -67,19 +98,13 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
   };
 
   const validateForm = () => {
-    const newErrors = {
-      bookId: "",
-      memberId: "",
-      form: "",
-    };
+    const newErrors = { bookId: "", memberId: "", form: "" };
     let isValid = true;
 
     if (!formData.bookId) {
       newErrors.bookId = "Please select a book";
       isValid = false;
-    } else if (
-      !availableBooks.some((book) => book.id.toString() === formData.bookId)
-    ) {
+    } else if (!availableBooks.some((book) => book.id === formData.bookId)) {
       newErrors.bookId = "Selected book is not available";
       isValid = false;
     }
@@ -87,9 +112,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
     if (!formData.memberId) {
       newErrors.memberId = "Please select a member";
       isValid = false;
-    } else if (
-      !members.some((member) => member.id.toString() === formData.memberId)
-    ) {
+    } else if (!members.some((member) => member.id === formData.memberId)) {
       newErrors.memberId = "Selected member is not valid";
       isValid = false;
     }
@@ -102,11 +125,11 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsSubmitting(true);
-    try {
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14);
+    toastCompletedRef.current = false;
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 14);
 
+    try {
       await dispatch(
         borrowBook({
           bookId: Number(formData.bookId),
@@ -114,27 +137,28 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
           dueDate: dueDate.toISOString(),
         })
       ).unwrap();
-
-      toast.success("Book borrowed successfully!");
-      onClose();
-    } catch (error) {
-      // Error handled by useEffect
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      // Error handled in useEffect
     }
   };
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!borrowLoading && !toastCompletedRef.current) {
+          onClose();
+        }
+      }}
       title="Borrow Book"
       description="Select a book and member to create a new borrow record."
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {errors.form && (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {Object.values(errors).some((error) => error) && (
           <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{errors.form}</p>
+            <p className="text-sm text-red-600">
+              {errors.form || "Please fix the errors in the form."}
+            </p>
           </div>
         )}
 
@@ -148,7 +172,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
             value={formData.memberId}
             onChange={handleChange}
             error={errors.memberId}
-            disabled={membersLoading || isSubmitting}
+            disabled={membersLoading || borrowLoading}
             className="w-full"
           >
             <option value="" hidden>
@@ -156,10 +180,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
             </option>
             {members.map((member) => (
               <option key={member.id} value={member.id}>
-                <div className="py-1">
-                  <div className="font-medium">{member.name}</div>
-                  <div className="text-sm text-gray-500">{member.email}</div>
-                </div>
+                {member.name} ({member.email})
               </option>
             ))}
           </Select>
@@ -175,7 +196,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
             value={formData.bookId}
             onChange={handleChange}
             error={errors.bookId}
-            disabled={booksLoading || isSubmitting}
+            disabled={booksLoading || borrowLoading}
             className="w-full"
           >
             <option value="" hidden>
@@ -183,12 +204,7 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
             </option>
             {availableBooks.map((book) => (
               <option key={book.id} value={book.id}>
-                <div className="py-1">
-                  <div className="font-medium">{book.title}</div>
-                  <div className="text-sm text-gray-500">
-                    by {book.author} • {book.availableCopies} available
-                  </div>
-                </div>
+                {book.title} by {book.author} ({book.availableCopies} available)
               </option>
             ))}
           </Select>
@@ -219,13 +235,26 @@ const BorrowBookDialog = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (!borrowLoading && !toastCompletedRef.current) {
+                onClose();
+              }
+            }}
+            disabled={borrowLoading || toastCompletedRef.current}
+          >
             Cancel
           </Button>
           <Button
             type="submit"
-            isLoading={isSubmitting}
-            disabled={booksLoading || membersLoading}
+            isLoading={borrowLoading}
+            disabled={
+              booksLoading ||
+              membersLoading ||
+              borrowLoading ||
+              toastCompletedRef.current
+            }
           >
             Borrow Book
           </Button>

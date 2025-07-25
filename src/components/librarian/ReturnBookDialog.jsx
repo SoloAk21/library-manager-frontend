@@ -1,27 +1,31 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format, differenceInDays } from "date-fns";
 import Dialog from "../common/Dialog";
 import Button from "../ui/Button";
 import Select from "../ui/Select";
 import { CalendarIcon } from "../ui/icons";
-import toast from "react-hot-toast";
-import { returnBook } from "../../redux/borrowRecords/borrowRecordsSlice";
+import {
+  returnBook,
+  clearMessages,
+} from "../../redux/borrowRecords/borrowRecordsSlice";
+import { useToast } from "../../context/ToastContext";
 import Badge from "../ui/Badge";
 
-const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
+const ReturnBookDialog = ({ isOpen, onClose, record }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
   const { records, loading: recordsLoading } = useSelector(
     (state) => state.borrowRecords
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { error, successMessage } = useSelector((state) => state.borrowRecords);
   const [selectedRecordId, setSelectedRecordId] = useState("");
   const [errors, setErrors] = useState({
     recordId: "",
     form: "",
   });
+  const toastCompletedRef = useRef(false);
 
-  // Filter to get only borrowed (not returned) records
   const borrowedRecords = useMemo(() => {
     return records
       .filter((record) => !record.returnDate)
@@ -34,13 +38,54 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
       }));
   }, [records]);
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       setSelectedRecordId(record?.id || "");
       setErrors({ recordId: "", form: "" });
+      dispatch(clearMessages());
+      toastCompletedRef.current = false;
     }
-  }, [isOpen, record]);
+  }, [isOpen, record, dispatch]);
+
+  useEffect(() => {
+    if (successMessage && isOpen && !toastCompletedRef.current) {
+      showToast(successMessage, "success", "Book Returned");
+      dispatch(clearMessages());
+      toastCompletedRef.current = true;
+      setTimeout(() => {
+        if (isOpen && !recordsLoading) {
+          onClose();
+          toastCompletedRef.current = false;
+        }
+      }, 1500);
+    }
+
+    if (error && isOpen && !toastCompletedRef.current) {
+      const errorMessage = parseApiError(error);
+      setErrors((prev) => ({ ...prev, form: errorMessage }));
+      showToast(errorMessage, "error", "Return Failed");
+      dispatch(clearMessages());
+      toastCompletedRef.current = true;
+      setTimeout(() => {
+        toastCompletedRef.current = false;
+      }, 1500);
+    }
+  }, [
+    successMessage,
+    error,
+    dispatch,
+    isOpen,
+    onClose,
+    showToast,
+    recordsLoading,
+  ]);
+
+  const parseApiError = (error) => {
+    if (typeof error === "string") return error;
+    if (error.message) return error.message;
+    if (Array.isArray(error)) return error.map((err) => err.message).join(", ");
+    return "An unknown error occurred";
+  };
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -51,19 +96,14 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
   };
 
   const validateForm = () => {
-    const newErrors = {
-      recordId: "",
-      form: "",
-    };
+    const newErrors = { recordId: "", form: "" };
     let isValid = true;
 
     if (!selectedRecordId) {
       newErrors.recordId = "Please select a borrow record";
       isValid = false;
     } else if (
-      !borrowedRecords.some(
-        (record) => record.id.toString() === selectedRecordId
-      )
+      !borrowedRecords.some((record) => record.id === selectedRecordId)
     ) {
       newErrors.recordId = "Selected record is not valid for return";
       isValid = false;
@@ -77,41 +117,37 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsSubmitting(true);
+    toastCompletedRef.current = false;
     try {
       await dispatch(returnBook(Number(selectedRecordId))).unwrap();
-      toast.success("Book returned successfully!");
-      if (onConfirm) onConfirm();
-      onClose();
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        form: error.message || "Failed to return book",
-      }));
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      // Error handled in useEffect
     }
   };
 
-  const selectedRecord = borrowedRecords.find(
-    (r) => r.id.toString() === selectedRecordId
-  );
+  const selectedRecord = borrowedRecords.find((r) => r.id === selectedRecordId);
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!recordsLoading && !toastCompletedRef.current) {
+          onClose();
+        }
+      }}
       title="Return Book"
       description="Select a borrowed book to mark as returned."
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {errors.form && (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {Object.values(errors).some((error) => error) && (
           <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{errors.form}</p>
+            <p className="text-sm text-red-600">
+              {errors.form || "Please fix the errors in the form."}
+            </p>
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">
             Select Book to Return
           </label>
@@ -121,7 +157,7 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
             value={selectedRecordId}
             onChange={handleChange}
             error={errors.recordId}
-            disabled={recordsLoading || isSubmitting}
+            disabled={recordsLoading || toastCompletedRef.current}
             className="w-full"
           >
             <option value="" hidden>
@@ -131,33 +167,14 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
             </option>
             {borrowedRecords.map((record) => (
               <option key={record.id} value={record.id}>
-                <div className="py-1">
-                  <div className="flex justify-between">
-                    <div className="font-medium">{record.bookTitle}</div>
-                    {record.daysOverdue > 0 && (
-                      <Badge variant="destructive">
-                        {record.daysOverdue} days overdue
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    by {record.bookAuthor || "Unknown Author"} • Borrowed by{" "}
-                    {record.memberName}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    Due: {format(new Date(record.dueDate), "MMMM do, yyyy")}
-                  </div>
-                </div>
+                {record.bookTitle} by {record.bookAuthor || "Unknown Author"}{" "}
+                (Borrowed by {record.memberName})
               </option>
             ))}
           </Select>
-          {errors.recordId && (
-            <p className="mt-1 text-sm text-red-600">{errors.recordId}</p>
-          )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="text-sm font-medium text-gray-600">
             Return Date
           </label>
@@ -182,7 +199,7 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
                 Due: {format(new Date(selectedRecord.dueDate), "MMMM do, yyyy")}
               </div>
               {selectedRecord.daysOverdue > 0 && (
-                <Badge variant="danger">
+                <Badge variant="destructive">
                   OVERDUE ({selectedRecord.daysOverdue} days)
                 </Badge>
               )}
@@ -191,13 +208,23 @@ const ReturnBookDialog = ({ isOpen, onClose, onConfirm, record }) => {
         )}
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (!recordsLoading && !toastCompletedRef.current) {
+                onClose();
+              }
+            }}
+            disabled={recordsLoading || toastCompletedRef.current}
+          >
             Cancel
           </Button>
           <Button
             type="submit"
-            isLoading={isSubmitting}
-            disabled={recordsLoading || !selectedRecordId}
+            isLoading={recordsLoading}
+            disabled={
+              recordsLoading || !selectedRecordId || toastCompletedRef.current
+            }
           >
             Return Book
           </Button>

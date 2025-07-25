@@ -1,18 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
-
 const API_BASE_URL = "http://localhost:3000";
 
-// Async Thunks
 export const fetchBorrowRecords = createAsyncThunk(
   "borrowRecords/fetchBorrowRecords",
-  async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
@@ -24,6 +21,7 @@ export const fetchBorrowRecords = createAsyncThunk(
         id: record.id,
         bookId: record.book_id,
         bookTitle: record.book?.title || "Unknown Book",
+        bookAuthor: record.book?.author || "Unknown Author",
         memberId: record.member_id,
         memberName: record.member?.name || "Unknown Member",
         borrowDate: record.borrow_date,
@@ -36,7 +34,7 @@ export const fetchBorrowRecords = createAsyncThunk(
           : "borrowed",
       }));
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to fetch borrow records"
       );
     }
@@ -45,12 +43,12 @@ export const fetchBorrowRecords = createAsyncThunk(
 
 export const fetchBorrowRecordById = createAsyncThunk(
   "borrowRecords/fetchBorrowRecordById",
-  async (recordId, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (recordId, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
@@ -63,6 +61,7 @@ export const fetchBorrowRecordById = createAsyncThunk(
         id: response.data.id,
         bookId: response.data.book_id,
         bookTitle: response.data.book?.title || "Unknown Book",
+        bookAuthor: response.data.book?.author || "Unknown Author",
         memberId: response.data.member_id,
         memberName: response.data.member?.name || "Unknown Member",
         borrowDate: response.data.borrow_date,
@@ -75,7 +74,7 @@ export const fetchBorrowRecordById = createAsyncThunk(
           : "borrowed",
       };
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to fetch borrow record"
       );
     }
@@ -84,28 +83,35 @@ export const fetchBorrowRecordById = createAsyncThunk(
 
 export const borrowBook = createAsyncThunk(
   "borrowRecords/borrowBook",
-  async ({ bookId, memberId, dueDate }, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async ({ bookId, memberId, dueDate }, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const response = await axios.post(
         `${API_BASE_URL}/borrow-records/borrow`,
-        {
-          book_id: bookId,
-          member_id: memberId,
-          due_date: dueDate,
-        },
+        { book_id: bookId, member_id: memberId, due_date: dueDate },
         { headers }
       );
-      return response.data;
+      return {
+        id: response.data.id,
+        bookId: response.data.book_id,
+        bookTitle: response.data.book?.title || "Unknown Book",
+        bookAuthor: response.data.book?.author || "Unknown Author",
+        memberId: response.data.member_id,
+        memberName: response.data.member?.name || "Unknown Member",
+        borrowDate: response.data.borrow_date,
+        dueDate: response.data.due_date,
+        returnDate: null,
+        status: "borrowed",
+      };
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to borrow book"
       );
     }
@@ -114,26 +120,35 @@ export const borrowBook = createAsyncThunk(
 
 export const returnBook = createAsyncThunk(
   "borrowRecords/returnBook",
-  async (borrowRecordId, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (borrowRecordId, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const response = await axios.post(
         `${API_BASE_URL}/borrow-records/return`,
-        {
-          borrow_record_id: borrowRecordId,
-        },
+        { borrow_record_id: borrowRecordId },
         { headers }
       );
-      return response.data;
+      return {
+        id: response.data.id,
+        bookId: response.data.book_id,
+        bookTitle: response.data.book?.title || "Unknown Book",
+        bookAuthor: response.data.book?.author || "Unknown Author",
+        memberId: response.data.member_id,
+        memberName: response.data.member?.name || "Unknown Member",
+        borrowDate: response.data.borrow_date,
+        dueDate: response.data.due_date,
+        returnDate: response.data.return_date,
+        status: "returned",
+      };
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to return book"
       );
     }
@@ -142,12 +157,12 @@ export const returnBook = createAsyncThunk(
 
 export const fetchOverdueBooks = createAsyncThunk(
   "borrowRecords/fetchOverdueBooks",
-  async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
@@ -160,6 +175,7 @@ export const fetchOverdueBooks = createAsyncThunk(
         id: record.id,
         bookId: record.book_id,
         bookTitle: record.book?.title || "Unknown Book",
+        bookAuthor: record.book?.author || "Unknown Author",
         memberId: record.member_id,
         memberName: record.member?.name || "Unknown Member",
         borrowDate: record.borrow_date,
@@ -169,7 +185,7 @@ export const fetchOverdueBooks = createAsyncThunk(
         ),
       }));
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to fetch overdue books"
       );
     }
@@ -178,12 +194,12 @@ export const fetchOverdueBooks = createAsyncThunk(
 
 export const fetchPopularGenres = createAsyncThunk(
   "borrowRecords/fetchPopularGenres",
-  async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
@@ -198,7 +214,7 @@ export const fetchPopularGenres = createAsyncThunk(
         borrowCount: genre.borrow_count,
       }));
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to fetch popular genres"
       );
     }
@@ -207,12 +223,12 @@ export const fetchPopularGenres = createAsyncThunk(
 
 export const fetchAnalyticsSummary = createAsyncThunk(
   "borrowRecords/fetchAnalyticsSummary",
-  async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
     const token = state.auth.token;
 
     if (!token) {
-      return thunkAPI.rejectWithValue("No authentication token found");
+      return rejectWithValue("No authentication token found");
     }
 
     try {
@@ -227,14 +243,13 @@ export const fetchAnalyticsSummary = createAsyncThunk(
         returnRate: response.data.return_rate,
       };
     } catch (err) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Failed to fetch analytics summary"
       );
     }
   }
 );
 
-// Slice
 const borrowRecordsSlice = createSlice({
   name: "borrowRecords",
   initialState: {
@@ -258,7 +273,6 @@ const borrowRecordsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch all records
       .addCase(fetchBorrowRecords.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -270,10 +284,8 @@ const borrowRecordsSlice = createSlice({
       .addCase(fetchBorrowRecords.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Fetch single record
       .addCase(fetchBorrowRecordById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -285,73 +297,44 @@ const borrowRecordsSlice = createSlice({
       .addCase(fetchBorrowRecordById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Borrow book
       .addCase(borrowBook.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(borrowBook.fulfilled, (state, action) => {
         state.loading = false;
-        state.records.push({
-          id: action.payload.id,
-          bookId: action.payload.book_id,
-          bookTitle: action.payload.book?.title || "Unknown Book",
-          memberId: action.payload.member_id,
-          memberName: action.payload.member?.name || "Unknown Member",
-          borrowDate: action.payload.borrow_date,
-          dueDate: action.payload.due_date,
-          returnDate: null,
-          status: "borrowed",
-        });
+        state.records = [...state.records, action.payload];
         state.successMessage = "Book borrowed successfully!";
-        toast.success("Book borrowed successfully!");
       })
       .addCase(borrowBook.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Return book
       .addCase(returnBook.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(returnBook.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedRecord = {
-          id: action.payload.id,
-          bookId: action.payload.book_id,
-          bookTitle: action.payload.book?.title || "Unknown Book",
-          memberId: action.payload.member_id,
-          memberName: action.payload.member?.name || "Unknown Member",
-          borrowDate: action.payload.borrow_date,
-          dueDate: action.payload.due_date,
-          returnDate: action.payload.return_date,
-          status: "returned",
-        };
         state.records = state.records.map((record) =>
-          record.id === updatedRecord.id ? updatedRecord : record
+          record.id === action.payload.id ? action.payload : record
         );
         if (
           state.currentRecord &&
-          state.currentRecord.id === updatedRecord.id
+          state.currentRecord.id === action.payload.id
         ) {
-          state.currentRecord = updatedRecord;
+          state.currentRecord = action.payload;
         }
         state.successMessage = "Book returned successfully!";
-        toast.success("Book returned successfully!");
       })
       .addCase(returnBook.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Fetch overdue books
       .addCase(fetchOverdueBooks.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -363,10 +346,8 @@ const borrowRecordsSlice = createSlice({
       .addCase(fetchOverdueBooks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Fetch popular genres
       .addCase(fetchPopularGenres.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -378,10 +359,8 @@ const borrowRecordsSlice = createSlice({
       .addCase(fetchPopularGenres.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
-      // Fetch analytics summary
       .addCase(fetchAnalyticsSummary.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -393,7 +372,6 @@ const borrowRecordsSlice = createSlice({
       .addCase(fetchAnalyticsSummary.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       });
   },
 });

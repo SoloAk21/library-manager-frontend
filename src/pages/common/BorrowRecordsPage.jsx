@@ -1,14 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchBorrowRecords,
-  returnBook,
   clearMessages,
   fetchOverdueBooks,
   fetchPopularGenres,
   fetchAnalyticsSummary,
 } from "../../redux/borrowRecords/borrowRecordsSlice";
-import toast from "react-hot-toast";
 import BorrowBookDialog from "../../components/librarian/BorrowBookDialog";
 import ReturnBookDialog from "../../components/librarian/ReturnBookDialog";
 import BorrowRecordCard from "../../components/librarian/BorrowRecordCard";
@@ -16,12 +14,12 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import { ArrowLeftRightIcon, SearchIcon } from "../../components/ui/icons";
 import useForm from "../../hooks/useForm";
+import { cn } from "../../utils/cn";
 
 const BorrowRecordsPage = () => {
   const dispatch = useDispatch();
   const {
     records = [],
-
     loading: recordsLoading,
     error,
     successMessage,
@@ -34,6 +32,7 @@ const BorrowRecordsPage = () => {
   const [isBorrowDialogOpen, setIsBorrowDialogOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const messageCompletedRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -45,13 +44,20 @@ const BorrowRecordsPage = () => {
   }, [dispatch, token]);
 
   useEffect(() => {
-    if (error) {
-      toast.error(error);
+    if (successMessage && !messageCompletedRef.current) {
       dispatch(clearMessages());
+      messageCompletedRef.current = true;
+      setTimeout(() => {
+        messageCompletedRef.current = false;
+      }, 1500);
     }
-    if (successMessage) {
-      toast.success(successMessage);
+
+    if (error && !messageCompletedRef.current) {
       dispatch(clearMessages());
+      messageCompletedRef.current = true;
+      setTimeout(() => {
+        messageCompletedRef.current = false;
+      }, 1500);
     }
   }, [error, successMessage, dispatch]);
 
@@ -68,15 +74,8 @@ const BorrowRecordsPage = () => {
     setIsReturnDialogOpen(true);
   };
 
-  const handleConfirmReturn = async () => {
-    if (selectedRecord) {
-      await dispatch(returnBook(selectedRecord.id));
-      setIsReturnDialogOpen(false);
-    }
-  };
-
   return (
-    <main className="flex-1 overflow-auto p-6">
+    <main className={cn("flex-1 overflow-auto p-6", "bg-gray-100")}>
       {recordsLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -143,13 +142,20 @@ const BorrowRecordsPage = () => {
       </div>
       <BorrowBookDialog
         isOpen={isBorrowDialogOpen}
-        onClose={() => setIsBorrowDialogOpen(false)}
+        onClose={() => {
+          if (!recordsLoading && !messageCompletedRef.current) {
+            setIsBorrowDialogOpen(false);
+          }
+        }}
       />
-
       <ReturnBookDialog
         isOpen={isReturnDialogOpen}
-        onClose={() => setIsReturnDialogOpen(false)}
-        onConfirm={handleConfirmReturn}
+        onClose={() => {
+          if (!recordsLoading && !messageCompletedRef.current) {
+            setIsReturnDialogOpen(false);
+            setSelectedRecord(null);
+          }
+        }}
         record={selectedRecord}
       />
     </main>
