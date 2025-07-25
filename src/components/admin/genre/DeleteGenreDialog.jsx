@@ -1,5 +1,6 @@
 import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
+import { useToast } from "../../../context/ToastContext"; // Add this import
 
 const DeleteGenreDialog = ({
   isOpen,
@@ -8,6 +9,21 @@ const DeleteGenreDialog = ({
   onConfirm,
   isLoading,
 }) => {
+  const { showToast } = useToast(); // Add this line
+
+  const handleConfirm = async () => {
+    try {
+      await onConfirm(genre);
+      showToast(
+        `${genre.name} deleted successfully`,
+        "success",
+        "Genre Deleted"
+      );
+    } catch (error) {
+      showToast(error.message || "Failed to delete genre", "error", "Error");
+    }
+  };
+
   return (
     <Dialog
       isOpen={isOpen}
@@ -21,8 +37,9 @@ const DeleteGenreDialog = ({
         </Button>
         <Button
           variant="destructive"
-          onClick={() => onConfirm(genre)}
+          onClick={handleConfirm}
           isLoading={isLoading}
+          disabled={isLoading}
         >
           Delete Genre
         </Button>

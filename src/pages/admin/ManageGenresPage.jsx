@@ -5,9 +5,7 @@ import {
   createGenre,
   updateGenre,
   deleteGenre,
-  clearMessages,
 } from "../../redux/genres/genresSlice";
-import toast from "react-hot-toast";
 import GenreCard from "../../components/admin/genre/GenreCard";
 import AddEditGenreDialog from "../../components/admin/genre/AddEditGenreDialog";
 import DeleteGenreDialog from "../../components/admin/genre/DeleteGenreDialog";
@@ -32,17 +30,6 @@ const useGenres = () => {
       dispatch(fetchGenres());
     }
   }, [dispatch, token]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearMessages());
-    }
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(clearMessages());
-    }
-  }, [error, successMessage, dispatch]);
 
   return { genres, genresLoading, isAdmin };
 };

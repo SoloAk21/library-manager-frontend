@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -158,7 +157,6 @@ const genresSlice = createSlice({
       .addCase(fetchGenres.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Fetch single genre
@@ -173,7 +171,6 @@ const genresSlice = createSlice({
       .addCase(fetchGenreById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Create genre
@@ -185,12 +182,10 @@ const genresSlice = createSlice({
         state.loading = false;
         state.genres.push(action.payload);
         state.successMessage = "Genre created successfully!";
-        toast.success("Genre created successfully!");
       })
       .addCase(createGenre.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Update genre
@@ -208,12 +203,10 @@ const genresSlice = createSlice({
           state.currentGenre = updatedGenre;
         }
         state.successMessage = "Genre updated successfully!";
-        toast.success("Genre updated successfully!");
       })
       .addCase(updateGenre.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
 
       // Delete genre
@@ -230,12 +223,10 @@ const genresSlice = createSlice({
           state.currentGenre = null;
         }
         state.successMessage = "Genre deleted successfully!";
-        toast.success("Genre deleted successfully!");
       })
       .addCase(deleteGenre.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       });
   },
 });

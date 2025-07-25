@@ -2,6 +2,7 @@ import React from "react";
 import Dialog from "../../common/Dialog";
 import Button from "../../ui/Button";
 import Input from "../../ui/Input";
+import { useToast } from "../../../context/ToastContext"; // Add this import
 
 const AddEditGenreDialog = ({
   isOpen,
@@ -11,6 +12,7 @@ const AddEditGenreDialog = ({
   isLoading,
 }) => {
   const [name, setName] = React.useState(genre?.name || "");
+  const { showToast } = useToast(); // Add this line
 
   React.useEffect(() => {
     if (isOpen) {
@@ -18,9 +20,22 @@ const AddEditGenreDialog = ({
     }
   }, [isOpen, genre]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(name);
+    try {
+      await onSubmit(name);
+      showToast(
+        `Genre ${genre ? "updated" : "created"} successfully`,
+        "success",
+        genre ? "Genre Updated" : "Genre Created"
+      );
+    } catch (error) {
+      showToast(
+        error.message || `Failed to ${genre ? "update" : "create"} genre`,
+        "error",
+        "Error"
+      );
+    }
   };
 
   return (
