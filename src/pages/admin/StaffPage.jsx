@@ -10,7 +10,7 @@ import { fetchUsers } from "../../redux/auth/authSlice";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 
-const StaffManagement = () => {
+const StaffPage = () => {
   const dispatch = useDispatch();
   const { users: usersData, loading } = useSelector((state) => state.auth);
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -22,11 +22,10 @@ const StaffManagement = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch, refreshKey]);
+  }, [dispatch]);
 
   const filteredStaff = users.filter((staffMember) =>
     `${staffMember.username} ${staffMember.email} ${staffMember.role}`
@@ -50,7 +49,7 @@ const StaffManagement = () => {
   };
 
   const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
+    dispatch(fetchUsers());
   };
 
   return (
@@ -130,4 +129,4 @@ const StaffManagement = () => {
   );
 };
 
-export default StaffManagement;
+export default StaffPage;

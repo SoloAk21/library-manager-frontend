@@ -1,5 +1,3 @@
-// src/redux/slices/staffSlice.js
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -70,39 +68,34 @@ const staffSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Update staff
-      .addCase(updateStaff.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(updateStaff.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedStaff = action.payload;
-        state.staffList = state.staffList.map((staff) =>
-          staff.id === updatedStaff.id ? updatedStaff : staff
-        );
         state.successMessage = "Staff updated successfully!";
-      })
-      .addCase(updateStaff.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       })
 
       // Delete staff
-      .addCase(deleteStaff.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(deleteStaff.fulfilled, (state, action) => {
         state.loading = false;
-        state.staffList = state.staffList.filter(
-          (staff) => staff.id !== action.payload
-        );
         state.successMessage = "Staff deleted successfully!";
       })
-      .addCase(deleteStaff.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+
+      // Add these cases to handle the pending/rejected states
+      .addMatcher(
+        (action) =>
+          [updateStaff.pending, deleteStaff.pending].includes(action.type),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          [updateStaff.rejected, deleteStaff.rejected].includes(action.type),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 

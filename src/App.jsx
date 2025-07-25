@@ -36,7 +36,7 @@ function App() {
           <Route path="members" element={<MembersPage />} />
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="genres" element={<ManageGenresPage />} />
-          <Route path="staff" element={<StaffManagement />} />
+          <Route path="staff" element={<StaffPage />} />
         </Route>
       </Routes>
     </Router>

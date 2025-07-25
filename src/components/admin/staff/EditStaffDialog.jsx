@@ -7,14 +7,14 @@ import Select from "../../ui/Select";
 import { updateStaff, clearMessages } from "../../../redux/staff/staffSlice";
 import { useToast } from "../../../context/ToastContext";
 
-const EditStaffDialog = ({ isOpen, onClose, staff }) => {
+const EditStaffDialog = ({ isOpen, onClose, staff, isLoading, onSuccess }) => {
   const dispatch = useDispatch();
   const { showToast } = useToast();
   const { loading, error, successMessage } = useSelector(
     (state) => state.staff
   );
+  const toastCompletedRef = useRef(false);
 
-  // Static phone numbers based on role
   const PHONE_NUMBERS = {
     librarian: "(555) 987-6543",
     admin: "(555) 123-4567",
@@ -27,22 +27,45 @@ const EditStaffDialog = ({ isOpen, onClose, staff }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const prevSuccessMessage = useRef(null);
-  const prevError = useRef(null);
 
-  const initializeForm = (staffData) => {
-    return {
-      username: staffData?.username || "",
-      email: staffData?.email || "",
-      role: staffData?.role || "librarian",
-    };
-  };
+  const initializeForm = (staffData) => ({
+    username: staffData?.username || "",
+    email: staffData?.email || "",
+    role: staffData?.role || "librarian",
+  });
+
+  useEffect(() => {
+    if (staff) {
+      setFormData(initializeForm(staff));
+    }
+  }, [staff]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch(clearMessages());
+      toastCompletedRef.current = false;
+    }
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (successMessage && isOpen && !toastCompletedRef.current) {
+      showToast(successMessage, "success", "Staff Updated");
+      dispatch(clearMessages());
+      toastCompletedRef.current = true;
+      onSuccess();
+      setTimeout(() => onClose(), 1500);
+    }
+
+    if (error && isOpen && !toastCompletedRef.current) {
+      showToast(error, "error", "Update Staff Failed");
+      dispatch(clearMessages());
+    }
+  }, [error, successMessage, dispatch, isOpen, onClose, showToast, onSuccess]);
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.username.trim()) newErrors.username = "Username is required";
-
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
@@ -56,10 +79,7 @@ const EditStaffDialog = ({ isOpen, onClose, staff }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e) => {
@@ -74,40 +94,16 @@ const EditStaffDialog = ({ isOpen, onClose, staff }) => {
     );
   };
 
-  useEffect(() => {
-    if (staff) {
-      setFormData(initializeForm(staff));
-    }
-  }, [staff]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      dispatch(clearMessages());
-    }
-  }, [isOpen, dispatch]);
-
-  useEffect(() => {
-    if (error && error !== prevError.current) {
-      showToast(error, "error", "Update Failed");
-      dispatch(clearMessages());
-    }
-
-    if (successMessage && successMessage !== prevSuccessMessage.current) {
-      showToast(successMessage, "success", "Staff Updated");
-      dispatch(clearMessages());
-      setTimeout(() => onClose(), 1500);
-    }
-
-    prevSuccessMessage.current = successMessage;
-    prevError.current = error;
-  }, [error, successMessage, dispatch, onClose, showToast]);
-
   if (!staff) return null;
 
   return (
     <Dialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!loading && !toastCompletedRef.current) {
+          onClose();
+        }
+      }}
       title="Edit Staff Member"
       description="Update the staff member information below."
     >
@@ -166,7 +162,15 @@ const EditStaffDialog = ({ isOpen, onClose, staff }) => {
         </Select>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (!loading && !toastCompletedRef.current) {
+                onClose();
+              }
+            }}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button type="submit" isLoading={loading} disabled={loading}>
