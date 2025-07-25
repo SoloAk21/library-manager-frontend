@@ -19,6 +19,7 @@ const AddBookDialog = ({ isOpen, onClose }) => {
     successMessage,
     loading: isSubmitting,
   } = useSelector((state) => state.books);
+  const actionTypeRef = useRef(null);
 
   const initialFormState = {
     title: "",
@@ -30,12 +31,11 @@ const AddBookDialog = ({ isOpen, onClose }) => {
 
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState(initialFormState);
-  const toastShownRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
       dispatch(fetchGenres());
-      toastShownRef.current = false;
+      actionTypeRef.current = null;
     }
   }, [isOpen, dispatch]);
 
@@ -44,28 +44,22 @@ const AddBookDialog = ({ isOpen, onClose }) => {
       setFormData(initialFormState);
       setErrors(initialFormState);
       dispatch(clearMessages());
-      toastShownRef.current = false;
+      actionTypeRef.current = null;
     }
   }, [isOpen, dispatch]);
 
   useEffect(() => {
-    if (!toastShownRef.current) {
-      if (error) {
-        showToast(error, "error", "Error");
-        toastShownRef.current = true;
-        dispatch(clearMessages());
-      } else if (successMessage) {
-        showToast(successMessage, "success", "Success");
-        toastShownRef.current = true;
-        dispatch(clearMessages());
-        setTimeout(() => onClose(), 1500);
-      }
+    if (successMessage && actionTypeRef.current === "create") {
+      showToast(successMessage, "success", "Book Created");
+      dispatch(clearMessages());
+      setTimeout(() => onClose(), 1500);
     }
 
-    return () => {
-      toastShownRef.current = false;
-    };
-  }, [error, successMessage, dispatch, onClose, showToast]);
+    if (error && actionTypeRef.current === "create") {
+      showToast(error, "error", "Creation Failed");
+      dispatch(clearMessages());
+    }
+  }, [successMessage, error, dispatch, onClose, showToast]);
 
   const validateForm = () => {
     const newErrors = { ...initialFormState };
@@ -124,6 +118,7 @@ const AddBookDialog = ({ isOpen, onClose }) => {
       return;
     }
 
+    actionTypeRef.current = "create";
     dispatch(
       createBook({
         ...formData,

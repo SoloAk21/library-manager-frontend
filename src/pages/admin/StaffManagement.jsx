@@ -22,10 +22,11 @@ const StaffManagement = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch]);
+  }, [dispatch, refreshKey]);
 
   const filteredStaff = users.filter((staffMember) =>
     `${staffMember.username} ${staffMember.email} ${staffMember.role}`
@@ -46,6 +47,10 @@ const StaffManagement = () => {
   const handleDeleteStaff = (staff) => {
     setSelectedStaff(staff);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -97,6 +102,7 @@ const StaffManagement = () => {
       <AddStaffDialog
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={handleRefresh}
       />
 
       <EditStaffDialog
@@ -104,6 +110,7 @@ const StaffManagement = () => {
         onClose={() => setIsEditDialogOpen(false)}
         staff={selectedStaff}
         isLoading={loading}
+        onSuccess={handleRefresh}
       />
 
       <ViewStaffDialog
@@ -117,6 +124,7 @@ const StaffManagement = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         staff={selectedStaff}
         isLoading={loading}
+        onSuccess={handleRefresh}
       />
     </main>
   );

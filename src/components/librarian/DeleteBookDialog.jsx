@@ -1,28 +1,43 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Dialog from "../common/Dialog";
 import Button from "../ui/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteBook, clearMessages } from "../../redux/books/booksSlice";
-import toast from "react-hot-toast";
+import { useToast } from "../../context/ToastContext";
 
 const DeleteBookDialog = ({ isOpen, onClose, book }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
   const { loading, error, successMessage } = useSelector(
     (state) => state.books
   );
+  const actionTypeRef = useRef(null);
 
   const handleDelete = async () => {
     if (!book) return;
-    try {
-      await dispatch(deleteBook(book.id)).unwrap();
-      toast.success("Book deleted successfully");
-      onClose();
-    } catch (err) {
-      toast.error(err?.message || "Failed to delete book");
-    } finally {
+    actionTypeRef.current = "delete";
+    await dispatch(deleteBook(book.id));
+  };
+
+  useEffect(() => {
+    if (successMessage && actionTypeRef.current === "delete") {
+      showToast(successMessage, "success", "Book Deleted");
+      dispatch(clearMessages());
+      setTimeout(() => onClose(), 1500);
+    }
+
+    if (error && actionTypeRef.current === "delete") {
+      showToast(error, "error", "Delete Failed");
       dispatch(clearMessages());
     }
-  };
+  }, [successMessage, error, dispatch, onClose, showToast]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch(clearMessages());
+      actionTypeRef.current = null;
+    }
+  }, [isOpen, dispatch]);
 
   if (!book) return null;
 

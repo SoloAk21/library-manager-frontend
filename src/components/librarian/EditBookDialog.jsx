@@ -6,10 +6,11 @@ import Input from "../ui/Input";
 import Select from "../ui/Select";
 import { updateBook, clearMessages } from "../../redux/books/booksSlice";
 import { fetchGenres } from "../../redux/genres/genresSlice";
-import toast from "react-hot-toast";
+import { useToast } from "../../context/ToastContext";
 
 const EditBookDialog = ({ isOpen, onClose, book }) => {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
   const { genres, loading: genresLoading } = useSelector(
     (state) => state.genres
   );
@@ -19,84 +20,66 @@ const EditBookDialog = ({ isOpen, onClose, book }) => {
     error,
   } = useSelector((state) => state.books);
 
-  const initialFormState = {
+  const [formData, setFormData] = useState({
     title: "",
     author: "",
     publishedYear: "",
     availableCopies: "",
     genreId: "",
     genreName: "",
-  };
+  });
 
-  const [formData, setFormData] = useState(initialFormState);
-  const [errors, setErrors] = useState(initialFormState);
-  const [genresLoaded, setGenresLoaded] = useState(false);
-  const prevSuccessMessage = useRef(null);
-  const prevError = useRef(null);
-
-  useEffect(() => {
-    let toastId = null;
-
-    // Only show toast if successMessage has changed and is non-empty
-    if (successMessage && successMessage !== prevSuccessMessage.current) {
-      toastId = toast.success(successMessage, {
-        id: "success",
-        data: { title: "Success" },
-      });
-      dispatch(clearMessages());
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-    }
-
-    // Only show toast if error has changed and is non-empty
-    if (error && error !== prevError.current) {
-      toastId = toast.error(error, { id: "error", data: { title: "Error" } });
-      dispatch(clearMessages());
-    }
-
-    // Update refs with current values
-    prevSuccessMessage.current = successMessage;
-    prevError.current = error;
-
-    return () => {
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [successMessage, error, dispatch, onClose]);
+  const [errors, setErrors] = useState({});
+  const actionTypeRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       dispatch(fetchGenres());
-      setGenresLoaded(true);
+      if (book && genres.length > 0) {
+        const currentGenre = genres.find((g) => g.id === book.genreId);
+        setFormData({
+          title: book.title || "",
+          author: book.author || "",
+          publishedYear: book.publishedYear?.toString() || "",
+          availableCopies: book.availableCopies?.toString() || "",
+          genreId: book.genreId?.toString() || "",
+          genreName: currentGenre?.name || "",
+        });
+      }
     }
-  }, [isOpen, dispatch]);
-
-  useEffect(() => {
-    if (isOpen && book && genres.length > 0) {
-      const currentGenre = genres.find((g) => g.id === book.genreId);
-      setFormData({
-        title: book.title || "",
-        author: book.author || "",
-        publishedYear: book.publishedYear?.toString() || "",
-        availableCopies: book.availableCopies?.toString() || "",
-        genreId: book.genreId?.toString() || "",
-        genreName: currentGenre?.name || "",
-      });
-    }
-  }, [isOpen, book, genres]);
+  }, [isOpen, book, genres, dispatch]);
 
   useEffect(() => {
     if (!isOpen) {
-      setFormData(initialFormState);
-      setErrors(initialFormState);
+      setFormData({
+        title: "",
+        author: "",
+        publishedYear: "",
+        availableCopies: "",
+        genreId: "",
+        genreName: "",
+      });
+      setErrors({});
       dispatch(clearMessages());
+      actionTypeRef.current = null;
     }
   }, [isOpen, dispatch]);
 
+  useEffect(() => {
+    if (successMessage && actionTypeRef.current === "update") {
+      showToast(successMessage, "success", "Book Updated");
+      dispatch(clearMessages());
+      setTimeout(() => onClose(), 1500);
+    }
+
+    if (error && actionTypeRef.current === "update") {
+      showToast(error, "error", "Update Failed");
+      dispatch(clearMessages());
+    }
+  }, [successMessage, error, dispatch, onClose, showToast]);
+
   const validateForm = () => {
-    const newErrors = { ...initialFormState };
+    const newErrors = {};
     let isValid = true;
 
     if (!formData.title.trim()) {
@@ -147,11 +130,9 @@ const EditBookDialog = ({ isOpen, onClose, book }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (!validateForm()) {
-      return;
-    }
-
+    actionTypeRef.current = "update";
     dispatch(
       updateBook({
         bookId: book.id,

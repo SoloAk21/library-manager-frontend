@@ -5,7 +5,6 @@ import {
   clearMessages,
   deleteBook,
 } from "../../redux/books/booksSlice";
-import toast from "react-hot-toast";
 import AddBookDialog from "../../components/librarian/AddBookDialog";
 import EditBookDialog from "../../components/librarian/EditBookDialog";
 import ViewBookDialog from "../../components/librarian/ViewBookDialog";
@@ -36,12 +35,7 @@ const useBooks = () => {
   }, [dispatch, token]);
 
   React.useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearMessages());
-    }
-    if (successMessage) {
-      toast.success(successMessage);
+    if (error || successMessage) {
       dispatch(clearMessages());
     }
   }, [error, successMessage, dispatch]);

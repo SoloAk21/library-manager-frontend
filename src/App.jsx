@@ -29,7 +29,6 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<MainContent />} />
           <Route path="dashboard" element={<MainContent />} />
           <Route path="borrow-return" element={<BorrowRecordsPage />} />
           <Route path="profile" element={<ProfilePage />} />

@@ -147,6 +147,8 @@ export const deleteBook = createAsyncThunk(
       await axios.delete(`${API_BASE_URL}/books/${bookId}`, { headers });
       return bookId;
     } catch (err) {
+      console.log("Delete book error:", err);
+
       return thunkAPI.rejectWithValue(
         err.response?.data?.message || "Failed to delete book"
       );
